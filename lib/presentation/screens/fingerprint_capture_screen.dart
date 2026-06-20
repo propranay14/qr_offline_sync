@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:qr_offline_sync/core/widgets/custom_cta_button.dart';
 
-import '../../data/local_db/local_db.dart';
-import '../../data/model/attendance_model.dart';
 import '../../data/model/student_model.dart';
 
 class FingerprintCaptureScreen extends StatefulWidget {
@@ -30,31 +29,31 @@ class _FingerprintCaptureScreenState extends State<FingerprintCaptureScreen> {
     // Demo SDK response
     fingerprintTemplate = "Rk1SACAyMAAAA_DEMO";
 
-    await saveAttendance();
+    // await saveAttendance();
 
     setState(() {
       isWaiting = false;
     });
   }
 
-  Future<void> saveAttendance() async {
-    final attendance = AttendanceModel(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      studentId: widget.student.studentId,
-      studentName: widget.student.name,
-      className: widget.student.className,
-      photoPath: widget.photoPath,
-      fingerprintTemplate: fingerprintTemplate!,
-      synced: false,
-    );
-
-    await LocalDb.instance.insertAttendance(attendance);
-  }
+  // Future<void> saveAttendance() async {
+  //   final attendance = AttendanceModel(
+  //     id: DateTime.now().millisecondsSinceEpoch.toString(),
+  //     studentId: widget.student.studentId,
+  //     studentName: widget.student.name,
+  //     className: widget.student.className,
+  //     photoPath: widget.photoPath,
+  //     fingerprintTemplate: fingerprintTemplate!,
+  //     synced: false,
+  //   );
+  //
+  //   await LocalDb.instance.insertAttendance(attendance);
+  // }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Fingerprint Capture")),
+      appBar: AppBar(title: const Text("Fingerprint Capture"), automaticallyImplyLeading: false),
       body: Center(
         child: isWaiting
             ? const CircularProgressIndicator()
@@ -65,11 +64,14 @@ class _FingerprintCaptureScreenState extends State<FingerprintCaptureScreen> {
                   const SizedBox(height: 20),
                   const Text("Saved Successfully"),
                   const SizedBox(height: 20),
-                  ElevatedButton(
-                    onPressed: () {
-                      Navigator.popUntil(context, (route) => route.isFirst);
-                    },
-                    child: const Text("Back To Home"),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 80, vertical: 20),
+                    child: CustomCtaButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+                      text: "Done",
+                    ),
                   ),
                 ],
               ),

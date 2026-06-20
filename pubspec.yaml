@@ -10,17 +10,16 @@ dependencies:
   flutter:
     sdk: flutter
 
-  mobile_scanner:
-  camera:
-  drift:
-  dio:
+  mobile_scanner: ^7.2.0
+  camera: ^0.12.0+1
+  drift: ^2.34.0
+  dio: ^5.9.2
   connectivity_plus: ^7.1.1
-  flutter_bloc:
-  path_provider:
   permission_handler: ^12.0.3
   flutter_blue_plus:
   sqflite: ^2.4.2+1
-  fluttertoast:
+  fluttertoast: ^9.1.0
+  path: ^1.9.1
 #  usb_serial:
 
 dev_dependencies:

@@ -1,7 +1,33 @@
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 class PermissionService {
+  static Future<void> _showNoInternetDialog(BuildContext context) async {
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) {
+        return AlertDialog(
+          title: const Text("No Internet"),
+          content: const Text("Internet connection is required to continue."),
+          actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text("OK"))],
+        );
+      },
+    );
+  }
+
+  static Future<bool> hasInternet(BuildContext context) async {
+    final result = await Connectivity().checkConnectivity();
+
+    if (result.contains(ConnectivityResult.none)) {
+      await _showNoInternetDialog(context);
+      return false;
+    }
+
+    return true;
+  }
+
   static Future<bool> requestCamera(BuildContext context) async {
     final status = await Permission.camera.request();
     return _handleStatus(context, status, "Camera");

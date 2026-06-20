@@ -8,6 +8,16 @@ class SignInValidationError {
 abstract class SignInValidator {
   static const int validationErrorCode = 1001;
 
+  static SignInValidationError? validateUsername(String userName) {
+    if (userName.trim().isEmpty) {
+      return SignInValidationError(validationErrorCode, "Please enter your username.");
+    }
+    if (userName.length < 2) {
+      return SignInValidationError(validationErrorCode, "Username must be at least 2 characters long.");
+    }
+    return null;
+  }
+
   static SignInValidationError? validateEmail(String email) {
     if (email.isEmpty) {
       return SignInValidationError(validationErrorCode, "Please enter your email.");
@@ -25,15 +35,6 @@ abstract class SignInValidator {
     }
     if (password.length < 6 || password.length > 20) {
       return SignInValidationError(validationErrorCode, "Password must be 6-20 characters long.");
-    }
-
-    // Optionally add stronger password requirements if needed:
-    final hasLetter = RegExp(r'[a-zA-Z]').hasMatch(password);
-    final hasNumber = RegExp(r'[0-9]').hasMatch(password);
-    final hasSpecialChar = RegExp(r'[!@#$%^&*(),.?":{}|<>]').hasMatch(password);
-
-    if (!hasLetter || !hasNumber || !hasSpecialChar) {
-      return SignInValidationError(validationErrorCode, "Password must include letters, numbers, and special characters.");
     }
     return null;
   }

@@ -1,21 +1,43 @@
 class StudentModel {
-  final String studentId;
-  final String name;
-  final String className;
+  final int id;
+  final String firstName;
+  final String fatherName;
+  final String lastName;
+  final String profilePhoto;
+  final String applicationNumber;
+  final String biometricData;
 
   StudentModel({
-    required this.studentId,
-    required this.name,
-    required this.className,
+    required this.id,
+    required this.firstName,
+    required this.fatherName,
+    required this.lastName,
+    required this.profilePhoto,
+    required this.applicationNumber,
+    required this.biometricData,
   });
 
-  factory StudentModel.fromQr(String qrData) {
-    final parts = qrData.split('|');
+  Map<String, dynamic> toMap() {
+    return {
+      "id": id,
+      "firstName": firstName,
+      "fatherName": fatherName,
+      "lastName": lastName,
+      "profilePhoto": profilePhoto,
+      "applicationNumber": applicationNumber,
+      "biometricData": biometricData,
+    };
+  }
 
+  factory StudentModel.fromMap(Map<String, dynamic> map) {
     return StudentModel(
-      studentId: parts[0],
-      name: parts[1],
-      className: parts[2],
+      id: map["id"],
+      firstName: map["firstName"],
+      fatherName: map["fatherName"],
+      lastName: map["lastName"],
+      profilePhoto: map["profilePhoto"],
+      applicationNumber: map["applicationNumber"],
+      biometricData: map["biometricData"],
     );
   }
 }

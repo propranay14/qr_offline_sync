@@ -1,9 +1,5 @@
-import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
-import 'package:qr_offline_sync/presentation/screens/home_screen.dart';
 import 'package:qr_offline_sync/presentation/screens/sign_in_screen.dart';
-
-import 'data/service/sync_service.dart';
 
 void main() {
   runApp(const MyApp());
@@ -20,16 +16,15 @@ class _MyAppState extends State<MyApp> {
   @override
   void initState() {
     super.initState();
-    listenForNetwork();
+    // listenForNetwork();
   }
 
-  void listenForNetwork() {
-    Connectivity().onConnectivityChanged.listen((result) async {
-      if (result.isNotEmpty) {
-        await SyncService.syncPending();
-      }
-    });
-  }
+  // Future<void> listenForNetwork() async {
+  //   final hasInternet = await PermissionService.hasInternet(context);
+  //
+  //   if (!hasInternet) return;
+  //   await SyncService.syncPending();
+  // }
 
   @override
   Widget build(BuildContext context) {

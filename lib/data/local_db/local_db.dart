@@ -1,7 +1,8 @@
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
-import '../model/attendance_model.dart';
+import '../model/candidate_sync_response_model.dart';
+import '../model/student_model.dart';
 
 class LocalDb {
   static final LocalDb instance = LocalDb._init();
@@ -10,47 +11,95 @@ class LocalDb {
   LocalDb._init();
 
   Future<Database> get database async {
-    if (_database != null) return _database!;
-    _database = await _initDB('attendance.db');
+    _database ??= await _initDB();
     return _database!;
   }
 
-  Future<Database> _initDB(String filePath) async {
-    final dbPath = await getDatabasesPath();
-    final path = join(dbPath, filePath);
+  Future<Database> _initDB() async {
+    final path = join(await getDatabasesPath(), "students.db");
 
-    return openDatabase(path, version: 1, onCreate: _createDB);
+    return await openDatabase(
+      path,
+      version: 1,
+      onCreate: (db, version) async {
+        await db.execute('''
+        CREATE TABLE students(
+          id INTEGER PRIMARY KEY,
+          firstName TEXT,
+          fatherName TEXT,
+          lastName TEXT,
+          profilePhoto TEXT,
+          applicationNumber TEXT,
+          biometricData TEXT
+        )
+        ''');
+      },
+    );
   }
 
-  Future _createDB(Database db, int version) async {
-    await db.execute('''
-      CREATE TABLE attendance(
-        id TEXT PRIMARY KEY,
-        studentId TEXT,
-        studentName TEXT,
-        className TEXT,
-        photoPath TEXT,
-        fingerprintTemplate TEXT,
-        synced INTEGER
-      )
-    ''');
-  }
-
-  Future<void> insertAttendance(AttendanceModel model) async {
+  Future<void> insertCandidates(List<CandidateModel> candidates) async {
     final db = await database;
 
-    await db.insert('attendance', model.toMap(), conflictAlgorithm: ConflictAlgorithm.ignore);
-  }
+    final batch = db.batch();
 
-  Future<List<Map<String, dynamic>>> getUnsynced() async {
+    for (final candidate in candidates) {
+      batch.insert(
+        "students",
+        candidate.toMap(),
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+    }
+
+    await batch.commit(noResult: true);
+  }
+  Future<void> insertDummyStudents() async {
     final db = await database;
 
-    return db.query('attendance', where: 'synced = ?', whereArgs: [0]);
+    final existing = await db.query("students");
+    if (existing.isNotEmpty) return;
+
+    for (int i = 1; i <= 100; i++) {
+      await db.insert(
+        "students",
+        StudentModel(
+          id: i,
+          firstName: "Student$i",
+          fatherName: "Father$i",
+          lastName: "Last$i",
+          profilePhoto: "",
+          applicationNumber: "APP$i",
+          biometricData: "BIO$i",
+        ).toMap(),
+      );
+    }
   }
 
-  Future<void> markSynced(String id) async {
+  Future<List<StudentModel>> searchStudent(String query) async {
     final db = await database;
 
-    await db.update('attendance', {'synced': 1}, where: 'id = ?', whereArgs: [id]);
+    final result = await db.query(
+      "students",
+      where: '''
+      applicationNumber LIKE ? OR
+      firstName LIKE ?
+      ''',
+      whereArgs: ['%$query%', '%$query%'],
+    );
+
+    return result.map((e) => StudentModel.fromMap(e)).toList();
+  }
+
+  Future<StudentModel?> getStudentByApplicationNumber(String appNo) async {
+    final db = await database;
+
+    final result = await db.query(
+      "students",
+      where: "applicationNumber = ?",
+      whereArgs: [appNo],
+    );
+
+    if (result.isEmpty) return null;
+
+    return StudentModel.fromMap(result.first);
   }
 }

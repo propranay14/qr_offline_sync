@@ -4,7 +4,6 @@ import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 
 import '../../data/model/student_model.dart';
-import 'fingerprint_capture_screen.dart';
 
 class FaceCaptureScreen extends StatefulWidget {
   final StudentModel student;
@@ -63,7 +62,7 @@ class _FaceCaptureScreenState extends State<FaceCaptureScreen> {
     }
 
     return Scaffold(
-      appBar: AppBar(title: const Text("Capture Face")),
+      appBar: AppBar(title: const Text("Capture Face"), automaticallyImplyLeading: false),
       body: Column(
         children: [
           Expanded(
@@ -91,12 +90,7 @@ class _FaceCaptureScreenState extends State<FaceCaptureScreen> {
                 if (capturedImage != null)
                   ElevatedButton(
                     onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => FingerprintCaptureScreen(student: widget.student, photoPath: capturedImage!.path),
-                        ),
-                      );
+                      Navigator.pop(context);
                     },
                     child: const Text("Continue"),
                   ),
