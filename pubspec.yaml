@@ -1,7 +1,7 @@
 name: qr_offline_sync
 description: "A new Flutter project."
 
-version: 1.0.0+1
+version: 1.0.0+2
 
 environment:
   sdk: ^3.11.5
@@ -20,6 +20,10 @@ dependencies:
   sqflite: ^2.4.2+1
   fluttertoast: ^9.1.0
   path: ^1.9.1
+  shared_preferences: ^2.5.5
+  firebase_core: ^4.11.0
+  firebase_crashlytics: ^5.2.4
+  workmanager: ^0.9.0+3
 #  usb_serial:
 
 dev_dependencies:

@@ -17,11 +17,11 @@ class PermissionService {
     );
   }
 
-  static Future<bool> hasInternet(BuildContext context) async {
+  static Future<bool> hasInternet(BuildContext? context) async {
     final result = await Connectivity().checkConnectivity();
 
     if (result.contains(ConnectivityResult.none)) {
-      await _showNoInternetDialog(context);
+      if (context != null) await _showNoInternetDialog(context);
       return false;
     }
 

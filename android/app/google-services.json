@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "376814090826",
+    "project_id": "mantra-5e74f",
+    "storage_bucket": "mantra-5e74f.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:376814090826:android:5b0a7b3477aa4c4bbf44b3",
+        "android_client_info": {
+          "package_name": "com.example.qr_offline_sync"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBPhMXXduzgYudcu8wV6qg7AFwdPC0oWms"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

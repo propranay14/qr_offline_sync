@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
-import 'package:qr_offline_sync/presentation/screens/student_details_screen.dart';
+import 'package:qr_offline_sync/presentation/screens/candidate_details_screen.dart';
 
 import '../../data/local_db/local_db.dart';
 
@@ -16,14 +16,14 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
   bool isScanned = false;
 
   Future<void> handleQrScan(String qrValue) async {
-    final student = await LocalDb.instance.getStudentByApplicationNumber(qrValue);
+    final candidate = await LocalDb.instance.getCandidateByApplicationID(qrValue);
 
     if (!mounted) return;
 
-    if (student != null) {
-      Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => StudentDetailsScreen(student: student)));
+    if (candidate != null) {
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => CandidateDetailsScreen(candidate: candidate)));
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Student not found")));
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("candidate not found")));
 
       setState(() {
         isScanned = false;
@@ -34,7 +34,7 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Scan Student QR")),
+      appBar: AppBar(title: const Text("Scan candidate QR")),
       body: MobileScanner(
         onDetect: (capture) async {
           if (isScanned) return;

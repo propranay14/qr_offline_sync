@@ -2,13 +2,12 @@ import 'dart:io';
 
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
-
-import '../../data/model/student_model.dart';
+import 'package:qr_offline_sync/data/model/candidate_sync_response_model.dart';
 
 class FaceCaptureScreen extends StatefulWidget {
-  final StudentModel student;
+  final CandidateModel candidate;
 
-  const FaceCaptureScreen({super.key, required this.student});
+  const FaceCaptureScreen({super.key, required this.candidate});
 
   @override
   State<FaceCaptureScreen> createState() => _FaceCaptureScreenState();

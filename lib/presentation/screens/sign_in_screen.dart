@@ -1,11 +1,17 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:qr_offline_sync/domain/usecase/candidates_sync_usecase.dart';
 import 'package:qr_offline_sync/domain/usecase/validation_form.dart';
 
 import '../../core/service/permission_service.dart';
+import '../../core/storage/session_manager.dart';
 import '../../core/widgets/custom_cta_button.dart';
 import '../../data/datasource/auth_remote_datasource.dart';
+import '../../data/datasource/candidate_remote_datasource.dart';
+import '../../data/local_db/local_db.dart';
 import '../../data/repository/auth_repository_impl.dart';
+import '../../data/repository/candidate_repository_impl.dart';
 import '../../domain/usecase/login_usecase.dart';
 import 'home_screen.dart';
 
@@ -33,39 +39,105 @@ class _SignInScreenState extends State<SignInScreen> {
   }
 
   Future<void> signIn() async {
-    if (!(_formKey.currentState?.validate() ?? false)) return;
-
     final hasInternet = await PermissionService.hasInternet(context);
-    if (!hasInternet) {
-      return;
-    }
+    if (!hasInternet) return;
 
     setState(() {
       isLoading = true;
     });
 
     try {
-      final useCase = LoginUseCase(AuthRepositoryImpl(AuthRemoteDataSource()));
+      /// LOGIN
+      final loginUseCase = LoginUseCase(AuthRepositoryImpl(AuthRemoteDataSource()));
 
-      final response = await useCase.call(username: usernameController.text.trim(), password: passwordController.text.trim());
+      /// API Call
+      final loginResponse = await loginUseCase.call(username: usernameController.text.trim(), password: passwordController.text.trim());
 
-      if (response.success) {
-        debugPrint("Operator ID: ${response.userInfo.id}");
-        debugPrint("Last Inserted ID: ${response.lastInsertedId}");
-
-        Fluttertoast.showToast(msg: "Login successful");
-        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const HomeScreen()));
-      } else {
+      /// API Response
+      if (!loginResponse.success) {
         Fluttertoast.showToast(msg: "Invalid credentials");
+        return;
       }
+
+      /// Sync Candidates from server
+      await syncCandidates();
+
+      /// Save Session for Operator
+      await SessionManager.saveLoginSession(
+        operatorId: loginResponse.userInfo.id,
+        username: loginResponse.userInfo.username,
+        firstName: loginResponse.userInfo.firstName,
+        middleName: loginResponse.userInfo.middleName,
+        lastName: loginResponse.userInfo.lastName,
+        roleName: loginResponse.userInfo.roleName,
+        mobile: loginResponse.userInfo.contactMobile,
+        email: loginResponse.userInfo.contactEmail,
+        lastInsertedId: loginResponse.lastInsertedId,
+      );
+
+      if (!mounted) return;
+      Fluttertoast.showToast(msg: "Login successful");
+
+      /// Navigate to Home Screen
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const HomeScreen()));
     } catch (e) {
       debugPrint("Login Error: $e");
-      Fluttertoast.showToast(msg: e.toString());
-    }
 
-    setState(() {
-      isLoading = false;
-    });
+      String errorMessage = "Something went wrong";
+
+      if (e is DioException) {
+        if (e.response?.statusCode == 401) {
+          errorMessage = e.response?.data["message"] ?? "Invalid username or password";
+        } else if (e.type == DioExceptionType.connectionError) {
+          errorMessage = "No internet connection";
+        } else if (e.type == DioExceptionType.connectionTimeout) {
+          errorMessage = "Connection timeout";
+        } else if (e.type == DioExceptionType.receiveTimeout) {
+          errorMessage = "Server timeout";
+        } else {
+          errorMessage = e.response?.data["message"] ?? "Server error";
+        }
+      }
+
+      Fluttertoast.showToast(msg: errorMessage);
+    } finally {
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> syncCandidates() async {
+    final hasInternet = await PermissionService.hasInternet(context);
+    if (!hasInternet) return;
+
+    /// LOCAL LAST ID
+    int localLastCandidateId = await LocalDb.instance.getLastCandidateId();
+
+    debugPrint("Local Last Candidate ID: $localLastCandidateId");
+
+    /// SYNC
+    final syncUseCase = CandidatesSyncUseCase(CandidateRepositoryImpl(CandidateRemoteDatasource(), LocalDb.instance));
+
+    bool hasMore = true;
+    int nextCandidateId = localLastCandidateId;
+
+    while (hasMore) {
+      final syncResponse = await syncUseCase.call(lastCandidateId: nextCandidateId, limit: 50);
+
+      if (syncResponse.success && syncResponse.data.isNotEmpty) {
+        await LocalDb.instance.insertCandidates(syncResponse.data);
+
+        debugPrint("Saved ${syncResponse.data.length} candidates");
+      }
+
+      nextCandidateId = syncResponse.nextCandidateId;
+      hasMore = syncResponse.hasMore;
+
+      debugPrint("Next Candidate ID: $nextCandidateId | Has More: $hasMore");
+    }
   }
 
   @override
