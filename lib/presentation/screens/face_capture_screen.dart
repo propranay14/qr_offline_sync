@@ -2,7 +2,9 @@ import 'dart:io';
 
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
-import 'package:qr_offline_sync/data/model/candidate_sync_response_model.dart';
+
+import '../../data/local_db/local_db.dart';
+import '../../data/model/fetch_candidates_response_model.dart';
 
 class FaceCaptureScreen extends StatefulWidget {
   final CandidateModel candidate;
@@ -88,8 +90,18 @@ class _FaceCaptureScreenState extends State<FaceCaptureScreen> {
                 const SizedBox(height: 10),
                 if (capturedImage != null)
                   ElevatedButton(
-                    onPressed: () {
-                      Navigator.pop(context);
+                    onPressed: () async {
+                      try {
+                        await LocalDb.instance.updateCandidatePhoto(widget.candidate.id, capturedImage!.path);
+
+                        if (!mounted) return;
+
+                        Navigator.pop(context, capturedImage!.path);
+                      } catch (e) {
+                        if (!mounted) return;
+
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Failed to save photo: $e")));
+                      }
                     },
                     child: const Text("Continue"),
                   ),

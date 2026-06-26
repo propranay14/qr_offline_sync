@@ -1,7 +1,7 @@
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
-import '../model/candidate_sync_response_model.dart';
+import '../model/fetch_candidates_response_model.dart';
 
 class LocalDb {
   static final LocalDb instance = LocalDb._init();
@@ -100,14 +100,30 @@ class LocalDb {
     final result = await db.query(
       "candidates",
       where: '''
-      application_id LIKE ? OR
-      candidate_name LIKE ? OR
       candidate_id LIKE ?
       ''',
-      whereArgs: ['%$query%', '%$query%', '%$query%'],
+      // application_id LIKE ? OR
+      // candidate_name LIKE ? OR
+      whereArgs: ['%$query%'],
     );
 
     return result.map((e) => CandidateModel.fromMap(e)).toList();
+  }
+
+  Future<void> updateCandidatePhoto(int id, String photoPath) async {
+    final db = await database;
+
+    await db.update(
+      "candidates",
+      {
+        "photo_path": photoPath,
+        "profile_photo": photoPath,
+        "face_status": "CAPTURED",
+        "updated": 1,
+      },
+      where: "id = ?",
+      whereArgs: [id],
+    );
   }
 
   Future<CandidateModel?> getCandidateByApplicationID(String applicationID) async {

@@ -1,8 +1,8 @@
-class CandidateSyncRequestModel {
+class FetchCandidatesRequestModel {
   final int lastCandidateId;
   final int limit;
 
-  CandidateSyncRequestModel({
+  FetchCandidatesRequestModel({
     required this.lastCandidateId,
     required this.limit,
   });

@@ -1,16 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:qr_offline_sync/core/widgets/custom_cta_button.dart';
-import 'package:qr_offline_sync/data/model/candidate_sync_response_model.dart';
 import 'package:qr_offline_sync/presentation/screens/candidate_details_screen.dart';
 import 'package:qr_offline_sync/presentation/screens/qr_scanner_screen.dart';
 import 'package:qr_offline_sync/presentation/screens/sign_in_screen.dart';
 
-import '../../core/service/permission_service.dart';
 import '../../core/storage/session_manager.dart';
-import '../../data/datasource/candidate_remote_datasource.dart';
 import '../../data/local_db/local_db.dart';
-import '../../data/repository/candidate_repository_impl.dart';
-import '../../domain/usecase/candidates_sync_usecase.dart';
+import '../../data/model/fetch_candidates_response_model.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -23,8 +18,37 @@ class _HomeScreenState extends State<HomeScreen> {
   List<CandidateModel> candidates = [];
   final TextEditingController searchController = TextEditingController();
 
+  String operatorName = "";
+  String role = "";
+  String mobile = "";
+  String email = "";
+
+  @override
+  void initState() {
+    super.initState();
+    loadOperator();
+  }
+
+  Future<void> loadOperator() async {
+    operatorName = await SessionManager.getFullName();
+    role = await SessionManager.getRoleName();
+    mobile = await SessionManager.getMobile();
+    email = await SessionManager.getEmail();
+
+    setState(() {});
+  }
+
   Future<void> searchCandidate() async {
-    final result = await LocalDb.instance.searchCandidate(searchController.text);
+    final query = searchController.text.trim();
+
+    if (query.isEmpty) {
+      setState(() {
+        candidates = [];
+      });
+      return;
+    }
+
+    final result = await LocalDb.instance.searchCandidate(query);
 
     setState(() {
       candidates = result;
@@ -32,83 +56,144 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> scanQr() async {
-    Navigator.push(context, MaterialPageRoute(builder: (_) => QRScannerScreen()));
-  }
-
-  Future<void> syncCandidates() async {
-    final hasInternet = await PermissionService.hasInternet(context);
-    if (!hasInternet) return;
-
-    /// LOCAL LAST ID
-    int localLastCandidateId = await LocalDb.instance.getLastCandidateId();
-
-    debugPrint("Local Last Candidate ID: $localLastCandidateId");
-
-    /// SYNC
-    final syncUseCase = CandidatesSyncUseCase(CandidateRepositoryImpl(CandidateRemoteDatasource(), LocalDb.instance));
-
-    bool hasMore = true;
-    int nextCandidateId = localLastCandidateId;
-
-    while (hasMore) {
-      final syncResponse = await syncUseCase.call(lastCandidateId: nextCandidateId, limit: 50);
-
-      if (syncResponse.success && syncResponse.data.isNotEmpty) {
-        await LocalDb.instance.insertCandidates(syncResponse.data);
-
-        debugPrint("Saved ${syncResponse.data.length} candidates");
-      }
-
-      nextCandidateId = syncResponse.nextCandidateId;
-      hasMore = syncResponse.hasMore;
-
-      debugPrint("Next Candidate ID: $nextCandidateId | Has More: $hasMore");
-    }
+    Navigator.push(context, MaterialPageRoute(builder: (_) => const QRScannerScreen()));
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      drawer: Drawer(
+        child: Column(
+          children: [
+            SizedBox(
+              height: 230,
+              width: double.infinity,
+              child: DrawerHeader(
+                decoration: BoxDecoration(color: Theme.of(context).colorScheme.primary),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Center(child: const CircleAvatar(radius: 28, child: Icon(Icons.person, size: 30))),
+                    const SizedBox(height: 10),
+                    Text(
+                      operatorName,
+                      style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                    Text(role, style: TextStyle(color: Colors.white70, fontSize: 12)),
+                    Text(mobile, style: const TextStyle(color: Colors.white70, fontSize: 12)),
+                    Text(email, style: const TextStyle(color: Colors.white70, fontSize: 12)),
+                  ],
+                ),
+              ),
+            ),
+
+            ListTile(
+              leading: const Icon(Icons.search),
+              title: const Text("Search Candidate"),
+              onTap: () {
+                Navigator.pop(context);
+              },
+            ),
+
+            const Divider(),
+
+            ListTile(
+              leading: const Icon(Icons.logout, color: Colors.red),
+              title: const Text("Logout"),
+              onTap: () async {
+                Navigator.pop(context);
+                await showLogoutDialog(context);
+              },
+            ),
+          ],
+        ),
+      ),
       appBar: AppBar(
-        title: const Text("Dashboard"),
-        actions: [
-          IconButton(onPressed: syncCandidates, icon: const Icon(Icons.refresh)),
-          IconButton(onPressed: () => showLogoutDialog(context), icon: const Icon(Icons.logout)),
-        ],
+        backgroundColor: Theme.of(context).colorScheme.primary,
+        iconTheme: const IconThemeData(color: Colors.white),
+        title: const Text("Dashboard", style: TextStyle(color: Colors.white)),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            TextField(
-              controller: searchController,
-              decoration: InputDecoration(
-                hintText: "Enter Application ID",
-                suffixIcon: IconButton(onPressed: searchCandidate, icon: const Icon(Icons.search)),
-              ),
-            ),
-            const SizedBox(height: 20),
-            Center(child: Text("Or")),
-            const SizedBox(height: 20),
-            CustomCtaButton(onPressed: scanQr, text: "Scan QR"),
-            const SizedBox(height: 20),
-            Expanded(
-              child: ListView.builder(
-                itemCount: candidates.length,
-                itemBuilder: (context, index) {
-                  final candidate = candidates[index];
-
-                  return Card(
-                    child: ListTile(
-                      onTap: () {
-                        Navigator.push(context, MaterialPageRoute(builder: (_) => CandidateDetailsScreen(candidate: candidate)));
-                      },
-                      title: Text(candidate.candidateName),
-                      subtitle: Text(candidate.applicationId),
+            Row(
+              children: [
+                Expanded(
+                  child: Container(
+                    height: 55,
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey.shade400),
+                      borderRadius: BorderRadius.circular(6),
                     ),
-                  );
-                },
-              ),
+                    child: TextField(
+                      controller: searchController,
+                      decoration: const InputDecoration(
+                        hintText: "Candidate ID",
+                        contentPadding: EdgeInsets.symmetric(horizontal: 16),
+                        border: InputBorder.none,
+                      ),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(width: 8),
+
+                InkWell(
+                  onTap: scanQr,
+                  child: Container(
+                    height: 55,
+                    width: 60,
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey.shade400),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: const Icon(Icons.qr_code_scanner, size: 28),
+                  ),
+                ),
+
+                const SizedBox(width: 8),
+
+                Container(
+                  height: 55,
+                  width: 60,
+                  decoration: BoxDecoration(color: Theme.of(context).colorScheme.primary, borderRadius: BorderRadius.circular(6)),
+                  child: IconButton(
+                    onPressed: searchCandidate,
+                    icon: const Icon(Icons.search, color: Colors.white),
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 20),
+
+            Expanded(
+              child: searchController.text.trim().isEmpty
+                  ? const Center(child: Text("Search candidate by ID or scan QR", style: TextStyle(fontSize: 16)))
+                  : candidates.isEmpty
+                  ? const Center(
+                      child: Text("No candidate found", style: TextStyle(fontSize: 16, color: Colors.red)),
+                    )
+                  : ListView.builder(
+                      itemCount: candidates.length,
+                      itemBuilder: (context, index) {
+                        final candidate = candidates[index];
+
+                        return Card(
+                          child: ListTile(
+                            onTap: () async {
+                              await Navigator.push(context, MaterialPageRoute(builder: (_) => CandidateDetailsScreen(candidate: candidate)));
+
+                              await searchCandidate();
+                            },
+                            title: Text(candidate.candidateName),
+                            subtitle: Text(candidate.applicationId),
+                          ),
+                        );
+                      },
+                    ),
             ),
           ],
         ),

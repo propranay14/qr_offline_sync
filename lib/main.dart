@@ -8,19 +8,19 @@ import 'package:workmanager/workmanager.dart';
 import 'core/service/background_sync_service.dart';
 import 'splash_screen.dart';
 
-void callbackDispatcher() {
-  Workmanager().executeTask((task, inputData) async {
-    await BackgroundSyncService.sync();
-    return Future.value(true);
-  });
-}
+// void callbackDispatcher() {
+//   Workmanager().executeTask((task, inputData) async {
+//     await BackgroundSyncService.sync();
+//     return Future.value(true);
+//   });
+// }
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await Firebase.initializeApp();
 
-  await Workmanager().initialize(callbackDispatcher, isInDebugMode: true);
+  // await Workmanager().initialize(callbackDispatcher, isInDebugMode: true);
 
   FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
 
@@ -60,3 +60,4 @@ class _MyAppState extends State<MyApp> {
     );
   }
 }
+

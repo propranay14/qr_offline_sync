@@ -1,7 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:qr_offline_sync/domain/usecase/candidates_sync_usecase.dart';
 import 'package:qr_offline_sync/domain/usecase/validation_form.dart';
 
 import '../../core/service/permission_service.dart';
@@ -12,6 +11,7 @@ import '../../data/datasource/candidate_remote_datasource.dart';
 import '../../data/local_db/local_db.dart';
 import '../../data/repository/auth_repository_impl.dart';
 import '../../data/repository/candidate_repository_impl.dart';
+import '../../domain/usecase/candidates_usecase.dart';
 import '../../domain/usecase/login_usecase.dart';
 import 'home_screen.dart';
 
@@ -60,7 +60,7 @@ class _SignInScreenState extends State<SignInScreen> {
       }
 
       /// Sync Candidates from server
-      await syncCandidates();
+      await fetchCandidates();
 
       /// Save Session for Operator
       await SessionManager.saveLoginSession(
@@ -109,7 +109,7 @@ class _SignInScreenState extends State<SignInScreen> {
     }
   }
 
-  Future<void> syncCandidates() async {
+  Future<void> fetchCandidates() async {
     final hasInternet = await PermissionService.hasInternet(context);
     if (!hasInternet) return;
 
@@ -119,13 +119,13 @@ class _SignInScreenState extends State<SignInScreen> {
     debugPrint("Local Last Candidate ID: $localLastCandidateId");
 
     /// SYNC
-    final syncUseCase = CandidatesSyncUseCase(CandidateRepositoryImpl(CandidateRemoteDatasource(), LocalDb.instance));
+    final fetchUseCase = CandidatesUseCase(CandidateRepositoryImpl(CandidateRemoteDatasource(), LocalDb.instance));
 
     bool hasMore = true;
     int nextCandidateId = localLastCandidateId;
 
     while (hasMore) {
-      final syncResponse = await syncUseCase.call(lastCandidateId: nextCandidateId, limit: 50);
+      final syncResponse = await fetchUseCase.call(lastCandidateId: nextCandidateId, limit: 50);
 
       if (syncResponse.success && syncResponse.data.isNotEmpty) {
         await LocalDb.instance.insertCandidates(syncResponse.data);

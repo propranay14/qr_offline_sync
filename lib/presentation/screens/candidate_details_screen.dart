@@ -2,15 +2,16 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:qr_offline_sync/core/widgets/custom_cta_button.dart';
-import 'package:qr_offline_sync/data/model/candidate_sync_response_model.dart';
 
+import '../../data/local_db/local_db.dart';
+import '../../data/model/fetch_candidates_response_model.dart';
 import 'face_capture_screen.dart';
 import 'fingerprint_capture_screen.dart';
 
 class CandidateDetailsScreen extends StatefulWidget {
-  final CandidateModel candidate;
+  CandidateModel candidate;
 
-  const CandidateDetailsScreen({super.key, required this.candidate});
+  CandidateDetailsScreen({super.key, required this.candidate});
 
   @override
   State<CandidateDetailsScreen> createState() => _CandidateDetailsScreenState();
@@ -19,6 +20,16 @@ class CandidateDetailsScreen extends StatefulWidget {
 class _CandidateDetailsScreenState extends State<CandidateDetailsScreen> {
   String? updatedPhotoPath;
   String? updatedBiometric;
+
+  Future<void> refreshCandidate() async {
+    final latest = await LocalDb.instance.getCandidateByApplicationID(widget.candidate.applicationId);
+
+    if (latest != null) {
+      setState(() {
+        widget.candidate = latest;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -74,6 +85,7 @@ class _CandidateDetailsScreenState extends State<CandidateDetailsScreen> {
                     setState(() {
                       updatedPhotoPath = result;
                     });
+                    await refreshCandidate();
                   }
                 },
                 text: "Update Photo",
@@ -98,6 +110,7 @@ class _CandidateDetailsScreenState extends State<CandidateDetailsScreen> {
                     setState(() {
                       updatedBiometric = result;
                     });
+                    await refreshCandidate();
                   }
                 },
                 text: "Update Biometric",

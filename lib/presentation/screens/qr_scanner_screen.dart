@@ -39,6 +39,7 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
         onDetect: (capture) async {
           if (isScanned) return;
 
+          /// Scan a QR which return candidate ID i.e. 1132
           final barcode = capture.barcodes.first;
           final qrValue = barcode.rawValue;
 

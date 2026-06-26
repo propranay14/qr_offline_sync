@@ -1,14 +1,14 @@
-class CandidateSyncResponseModel {
+class FetchCandidatesResponseModel {
   final bool success;
   final int count;
   final int nextCandidateId;
   final bool hasMore;
   final List<CandidateModel> data;
 
-  CandidateSyncResponseModel({required this.success, required this.count, required this.nextCandidateId, required this.hasMore, required this.data});
+  FetchCandidatesResponseModel({required this.success, required this.count, required this.nextCandidateId, required this.hasMore, required this.data});
 
-  factory CandidateSyncResponseModel.fromJson(Map<String, dynamic> json) {
-    return CandidateSyncResponseModel(
+  factory FetchCandidatesResponseModel.fromJson(Map<String, dynamic> json) {
+    return FetchCandidatesResponseModel(
       success: json["success"] ?? false,
       count: json["count"] ?? 0,
       nextCandidateId: json["next_candidate_id"] ?? 0,

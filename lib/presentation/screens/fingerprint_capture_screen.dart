@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:qr_offline_sync/core/widgets/custom_cta_button.dart';
-import 'package:qr_offline_sync/data/model/candidate_sync_response_model.dart';
+
+import '../../data/model/fetch_candidates_response_model.dart';
 
 class FingerprintCaptureScreen extends StatefulWidget {
   final CandidateModel candidate;

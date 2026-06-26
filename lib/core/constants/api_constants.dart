@@ -7,8 +7,8 @@ class ApiConstants {
   /// Auth
   static const String login = "login";
 
-  /// Candidate Sync
-  static const String syncCandidates = "syncCandidates";
+  /// Fetch Candidates
+  static const String fetchCandidates = "syncCandidates";
 
   // /// Candidate Update (future)
   // static const String updateCandidate = "updateCandidate";

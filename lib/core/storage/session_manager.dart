@@ -49,6 +49,49 @@ class SessionManager {
     return prefs.getInt(operatorIdKey) ?? 0;
   }
 
+  static Future<String> getUsername() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(usernameKey) ?? "";
+  }
+
+  static Future<String> getFirstName() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(firstNameKey) ?? "";
+  }
+
+  static Future<String> getMiddleName() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(middleNameKey) ?? "";
+  }
+
+  static Future<String> getLastName() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(lastNameKey) ?? "";
+  }
+
+  static Future<String> getFullName() async {
+    final first = await getFirstName();
+    final middle = await getMiddleName();
+    final last = await getLastName();
+
+    return "$first $middle $last".trim();
+  }
+
+  static Future<String> getRoleName() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(roleNameKey) ?? "";
+  }
+
+  static Future<String> getMobile() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(mobileKey) ?? "";
+  }
+
+  static Future<String> getEmail() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(emailKey) ?? "";
+  }
+
   static Future<int> getLastInsertedId() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getInt(lastInsertedIdKey) ?? 0;
