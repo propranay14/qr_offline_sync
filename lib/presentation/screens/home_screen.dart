@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:qr_offline_sync/core/service/permission_service.dart';
 import 'package:qr_offline_sync/presentation/screens/candidate_details_screen.dart';
 import 'package:qr_offline_sync/presentation/screens/qr_scanner_screen.dart';
 import 'package:qr_offline_sync/presentation/screens/sign_in_screen.dart';
@@ -103,7 +104,14 @@ class _HomeScreenState extends State<HomeScreen> {
               title: const Text("Logout"),
               onTap: () async {
                 Navigator.pop(context);
-                await showLogoutDialog(context);
+
+                final hasPending = await PermissionService.hasInternet(null);/*await LocalDb.instance.hasPendingSync()*/;
+
+                if (!hasPending) {
+                  await showPendingSyncDialog(context);
+                } else {
+                  await showLogoutDialog(context);
+                }
               },
             ),
           ],
@@ -113,11 +121,14 @@ class _HomeScreenState extends State<HomeScreen> {
         backgroundColor: Theme.of(context).colorScheme.primary,
         iconTheme: const IconThemeData(color: Colors.white),
         title: const Text("Dashboard", style: TextStyle(color: Colors.white)),
+        centerTitle: true,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
+            Text("Exam 1", style: TextStyle(fontSize: 28,fontWeight: FontWeight.bold)),
+            const SizedBox(height: 10),
             Row(
               children: [
                 Expanded(
@@ -228,6 +239,27 @@ class _HomeScreenState extends State<HomeScreen> {
                 Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => SignInScreen()), (route) => false);
               },
               child: const Text("Logout"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> showPendingSyncDialog(BuildContext context) async {
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) {
+        return AlertDialog(
+          title: const Text("Sync Pending"),
+          content: const Text("Some candidate data is not yet synced to the server.\nPlease connect to internet and complete sync before logout."),
+          actions: [
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: const Text("OK"),
             ),
           ],
         );

@@ -110,22 +110,6 @@ class LocalDb {
     return result.map((e) => CandidateModel.fromMap(e)).toList();
   }
 
-  Future<void> updateCandidatePhoto(int id, String photoPath) async {
-    final db = await database;
-
-    await db.update(
-      "candidates",
-      {
-        "photo_path": photoPath,
-        "profile_photo": photoPath,
-        "face_status": "CAPTURED",
-        "updated": 1,
-      },
-      where: "id = ?",
-      whereArgs: [id],
-    );
-  }
-
   Future<CandidateModel?> getCandidateByApplicationID(String applicationID) async {
     final db = await database;
 
@@ -134,6 +118,17 @@ class LocalDb {
     if (result.isEmpty) return null;
 
     return CandidateModel.fromMap(result.first);
+  }
+
+  Future<void> updateCandidatePhoto(int id, String photoPath) async {
+    final db = await database;
+
+    await db.update(
+      "candidates",
+      {"photo_path": photoPath, "profile_photo": photoPath, "face_status": "CAPTURED", "updated": 1},
+      where: "id = ?",
+      whereArgs: [id],
+    );
   }
 
   Future<void> clearCandidates() async {
