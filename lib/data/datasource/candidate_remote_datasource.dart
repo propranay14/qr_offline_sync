@@ -8,10 +8,10 @@ import '../model/fetch_candidates_response_model.dart';
 class CandidateRemoteDatasource {
   final Dio dio = ApiClient.dio;
 
-  Future<FetchCandidatesResponseModel> fetchCandidates({required int lastCandidateId, required int limit}) async {
+  Future<FetchCandidatesResponseModel> fetchCandidates({required int lastCandidateId, required int limit, required String examId}) async {
     final response = await dio.post(
       ApiConstants.fetchCandidates,
-      data: FetchCandidatesRequestModel(lastCandidateId: lastCandidateId, limit: limit).toJson(),
+      data: FetchCandidatesRequestModel(lastCandidateId: lastCandidateId, limit: limit, examId: examId).toJson(),
     );
 
     return FetchCandidatesResponseModel.fromJson(response.data);

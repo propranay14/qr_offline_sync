@@ -11,24 +11,7 @@ class CandidateRepositoryImpl implements CandidateRepository {
   CandidateRepositoryImpl(this.remoteDataSource, this.localDb);
 
   @override
-  Future<FetchCandidatesResponseModel> fetchCandidates({required int lastCandidateId, required int limit}) async {
-    return await remoteDataSource.fetchCandidates(lastCandidateId: lastCandidateId, limit: limit);
-  }
-
-  @override
-  Future<void> syncAllCandidates({required int lastCandidateId}) async {
-    int currentLastId = lastCandidateId;
-    bool hasMore = true;
-
-    while (hasMore) {
-      final response = await fetchCandidates(lastCandidateId: currentLastId, limit: 50);
-
-      for (final candidate in response.data) {
-        await localDb.insertCandidate(candidate);
-      }
-
-      hasMore = response.hasMore;
-      currentLastId = response.nextCandidateId;
-    }
+  Future<FetchCandidatesResponseModel> fetchCandidates({required int lastCandidateId, required int limit, required String examId}) async {
+    return await remoteDataSource.fetchCandidates(lastCandidateId: lastCandidateId, limit: limit, examId: examId);
   }
 }

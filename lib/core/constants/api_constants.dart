@@ -2,7 +2,7 @@ class ApiConstants {
   ApiConstants._();
 
   /// Base URL
-  static const String baseUrl = "https://biometrics.gvsolutions.in/api/";
+  static const String baseUrl = "https://biometric.requetech.in/api/";
 
   /// Auth
   static const String login = "login";

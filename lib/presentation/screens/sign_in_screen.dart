@@ -25,8 +25,8 @@ class SignInScreen extends StatefulWidget {
 class _SignInScreenState extends State<SignInScreen> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
-  final TextEditingController usernameController = TextEditingController(text: "operator1");
-  final TextEditingController passwordController = TextEditingController(text: "operator1");
+  final TextEditingController usernameController = TextEditingController(text: "DeepakB");
+  final TextEditingController passwordController = TextEditingController(text: "12345");
 
   bool isLoading = false;
   bool obscurePassword = true;
@@ -60,19 +60,18 @@ class _SignInScreenState extends State<SignInScreen> {
       }
 
       /// Sync Candidates from server
-      await fetchCandidates();
+      await fetchCandidates(loginResponse.fetchLimit, loginResponse.examInfo?.examId ?? '');
 
       /// Save Session for Operator
       await SessionManager.saveLoginSession(
         operatorId: loginResponse.userInfo.id,
         username: loginResponse.userInfo.username,
         firstName: loginResponse.userInfo.firstName,
-        middleName: loginResponse.userInfo.middleName,
+        middleName: loginResponse.userInfo.middleName ?? "",
         lastName: loginResponse.userInfo.lastName,
         roleName: loginResponse.userInfo.roleName,
         mobile: loginResponse.userInfo.contactMobile,
         email: loginResponse.userInfo.contactEmail,
-        lastInsertedId: loginResponse.lastInsertedId,
       );
 
       if (!mounted) return;
@@ -80,8 +79,9 @@ class _SignInScreenState extends State<SignInScreen> {
 
       /// Navigate to Home Screen
       Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const HomeScreen()));
-    } catch (e) {
+    } catch (e, stackTrace) {
       debugPrint("Login Error: $e");
+      debugPrint("StackTrace: $stackTrace");
 
       String errorMessage = "Something went wrong";
 
@@ -109,34 +109,48 @@ class _SignInScreenState extends State<SignInScreen> {
     }
   }
 
-  Future<void> fetchCandidates() async {
-    final hasInternet = await PermissionService.hasInternet(context);
-    if (!hasInternet) return;
+  Future<void> fetchCandidates(int limit, String examId) async {
+    try {
+      final hasInternet = await PermissionService.hasInternet(context);
+      if (!hasInternet) return;
 
-    /// LOCAL LAST ID
-    int localLastCandidateId = await LocalDb.instance.getLastCandidateId();
+      /// LOCAL LAST ID
+      int localLastCandidateId = await LocalDb.instance.getLastCandidateId();
 
-    debugPrint("Local Last Candidate ID: $localLastCandidateId");
+      debugPrint("Local Last Candidate ID: $localLastCandidateId");
 
-    /// SYNC
-    final fetchUseCase = CandidatesUseCase(CandidateRepositoryImpl(CandidateRemoteDatasource(), LocalDb.instance));
+      /// SYNC
+      final fetchUseCase = CandidatesUseCase(CandidateRepositoryImpl(CandidateRemoteDatasource(), LocalDb.instance));
 
-    bool hasMore = true;
-    int nextCandidateId = localLastCandidateId;
+      bool hasMore = true;
+      int nextCandidateId = localLastCandidateId;
 
-    while (hasMore) {
-      final syncResponse = await fetchUseCase.call(lastCandidateId: nextCandidateId, limit: 50);
+      while (hasMore) {
+        try {
+          final syncResponse = await fetchUseCase.call(lastCandidateId: nextCandidateId, limit: limit, examId: examId);
 
-      if (syncResponse.success && syncResponse.data.isNotEmpty) {
-        await LocalDb.instance.insertCandidates(syncResponse.data);
+          if (syncResponse.success && syncResponse.data.isNotEmpty) {
+            await LocalDb.instance.insertCandidates(syncResponse.data);
 
-        debugPrint("Saved ${syncResponse.data.length} candidates");
+            debugPrint("Saved ${syncResponse.data.length} candidates");
+          }
+
+          nextCandidateId = syncResponse.nextCandidateId;
+          hasMore = syncResponse.hasMore;
+
+          debugPrint("Next Candidate ID: $nextCandidateId | Has More: $hasMore");
+        } catch (e, stackTrace) {
+          debugPrint("Sync Loop Error: $e");
+          debugPrint("Failed Candidate ID: $nextCandidateId");
+          debugPrintStack(stackTrace: stackTrace);
+
+          rethrow;
+        }
       }
-
-      nextCandidateId = syncResponse.nextCandidateId;
-      hasMore = syncResponse.hasMore;
-
-      debugPrint("Next Candidate ID: $nextCandidateId | Has More: $hasMore");
+    } catch (e, stackTrace) {
+      debugPrint("Fetch Candidates Error: $e");
+      debugPrint("Exam ID: $examId | Limit: $limit");
+      debugPrintStack(stackTrace: stackTrace);
     }
   }
 

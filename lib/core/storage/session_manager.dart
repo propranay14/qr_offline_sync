@@ -23,7 +23,7 @@ class SessionManager {
     required String roleName,
     required String mobile,
     required String email,
-    required int lastInsertedId,
+    // required int lastInsertedId,
   }) async {
     final prefs = await SharedPreferences.getInstance();
 
@@ -36,7 +36,7 @@ class SessionManager {
     await prefs.setString(roleNameKey, roleName);
     await prefs.setString(mobileKey, mobile);
     await prefs.setString(emailKey, email);
-    await prefs.setInt(lastInsertedIdKey, lastInsertedId);
+    // await prefs.setInt(lastInsertedIdKey, lastInsertedId);
   }
 
   static Future<bool> isLoggedIn() async {

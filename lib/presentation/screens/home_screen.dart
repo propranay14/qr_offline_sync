@@ -105,7 +105,7 @@ class _HomeScreenState extends State<HomeScreen> {
               onTap: () async {
                 Navigator.pop(context);
 
-                final hasPending = await PermissionService.hasInternet(null);/*await LocalDb.instance.hasPendingSync()*/;
+                final hasPending = await PermissionService.hasInternet(null); /*await LocalDb.instance.hasPendingSync()*/
 
                 if (!hasPending) {
                   await showPendingSyncDialog(context);
@@ -127,7 +127,7 @@ class _HomeScreenState extends State<HomeScreen> {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            Text("Exam 1", style: TextStyle(fontSize: 28,fontWeight: FontWeight.bold)),
+            Text("Exam 1", style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
             const SizedBox(height: 10),
             Row(
               children: [
@@ -141,7 +141,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: TextField(
                       controller: searchController,
                       decoration: const InputDecoration(
-                        hintText: "Candidate ID",
+                        hintText: "Application ID",
                         contentPadding: EdgeInsets.symmetric(horizontal: 16),
                         border: InputBorder.none,
                       ),

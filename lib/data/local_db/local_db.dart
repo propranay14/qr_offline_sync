@@ -100,7 +100,7 @@ class LocalDb {
     final result = await db.query(
       "candidates",
       where: '''
-      candidate_id LIKE ?
+      application_id LIKE ?
       ''',
       // application_id LIKE ? OR
       // candidate_name LIKE ? OR
