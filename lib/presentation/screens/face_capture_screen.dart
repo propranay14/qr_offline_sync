@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 
+import '../../core/storage/session_manager.dart';
 import '../../data/local_db/local_db.dart';
 import '../../data/model/fetch_candidates_response_model.dart';
 
@@ -92,8 +93,9 @@ class _FaceCaptureScreenState extends State<FaceCaptureScreen> {
                   ElevatedButton(
                     onPressed: () async {
                       try {
-                        await LocalDb.instance.updateCandidatePhoto(widget.candidate.id, capturedImage!.path);
+                        final operatorId = await SessionManager.getOperatorId();
 
+                        await LocalDb.instance.updateCandidatePhoto(widget.candidate.id, capturedImage!.path, operatorId);
                         if (!mounted) return;
 
                         Navigator.pop(context, capturedImage!.path);

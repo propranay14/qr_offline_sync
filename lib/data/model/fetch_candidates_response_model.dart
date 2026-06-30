@@ -5,7 +5,13 @@ class FetchCandidatesResponseModel {
   final bool hasMore;
   final List<CandidateModel> data;
 
-  FetchCandidatesResponseModel({required this.success, required this.count, required this.nextCandidateId, required this.hasMore, required this.data});
+  FetchCandidatesResponseModel({
+    required this.success,
+    required this.count,
+    required this.nextCandidateId,
+    required this.hasMore,
+    required this.data,
+  });
 
   factory FetchCandidatesResponseModel.fromJson(Map<String, dynamic> json) {
     return FetchCandidatesResponseModel(
@@ -20,8 +26,8 @@ class FetchCandidatesResponseModel {
 
 class CandidateModel {
   final int id;
-  final String candidateId;
-  final String applicationId;
+  final String rollNumber;
+  final String applicationNumber;
   final String candidateName;
   final String? fatherName;
   final String? motherName;
@@ -36,21 +42,26 @@ class CandidateModel {
   final String? state;
   final String? pincode;
   final String? biometricStatus;
+  final String? photoPath;
+  final String? fingerprintPath;
+  final int isSynced;
+  final String? remarks;
+  final String? captureTime;
 
   /// Future-ready fields
   final String? profilePhoto;
   final String? fingerprintTemplate;
   final String? faceStatus;
   final String? fingerprintStatus;
-  final String? updatedBy;
+  final int? updatedBy;
   final String? createdAt;
 
   final String updatedAt;
 
   CandidateModel({
     required this.id,
-    required this.candidateId,
-    required this.applicationId,
+    required this.rollNumber,
+    required this.applicationNumber,
     required this.candidateName,
     this.fatherName,
     this.motherName,
@@ -72,13 +83,18 @@ class CandidateModel {
     this.updatedBy,
     this.createdAt,
     required this.updatedAt,
+    this.photoPath,
+    this.fingerprintPath,
+    required this.isSynced,
+    this.remarks,
+    this.captureTime,
   });
 
   factory CandidateModel.fromJson(Map<String, dynamic> json) {
     return CandidateModel(
       id: json["id"] ?? 0,
-      candidateId: json["candidate_id"] ?? "",
-      applicationId: json["application_id"] ?? "",
+      rollNumber: json["roll_number"] ?? "",
+      applicationNumber: json["application_number"] ?? "",
       candidateName: json["candidate_name"] ?? "",
       fatherName: json["father_name"],
       motherName: json["mother_name"],
@@ -103,14 +119,15 @@ class CandidateModel {
       createdAt: json["created_at"],
 
       updatedAt: json["updated_at"] ?? "",
+      isSynced: 0,
     );
   }
 
   factory CandidateModel.fromMap(Map<String, dynamic> map) {
     return CandidateModel(
       id: map["id"] ?? 0,
-      candidateId: map["candidate_id"] ?? "",
-      applicationId: map["application_id"] ?? "",
+      rollNumber: map["roll_number"] ?? "",
+      applicationNumber: map["application_number"] ?? "",
       candidateName: map["candidate_name"] ?? "",
       fatherName: map["father_name"],
       motherName: map["mother_name"],
@@ -132,14 +149,15 @@ class CandidateModel {
       updatedBy: map["updated_by"],
       createdAt: map["created_at"],
       updatedAt: map["updated_at"] ?? "",
+      isSynced: map["is_synced"] ?? 0,
     );
   }
 
   Map<String, dynamic> toMap() {
     return {
       "id": id,
-      "candidate_id": candidateId,
-      "application_id": applicationId,
+      "roll_number": rollNumber,
+      "application_number": applicationNumber,
       "candidate_name": candidateName,
       "father_name": fatherName,
       "mother_name": motherName,
@@ -165,10 +183,11 @@ class CandidateModel {
 
       "updated_at": updatedAt,
 
-      /// Local-only fields
-      "updated": 0,
-      "photo_path": "",
-      "fingerprint_data": "",
+      "photo_path": photoPath,
+      "fingerprint_data": fingerprintPath,
+      "is_synced": isSynced,
+      "remarks": remarks,
+      "capture_time": captureTime,
     };
   }
 }

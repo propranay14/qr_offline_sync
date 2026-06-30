@@ -13,7 +13,21 @@ class LoggerInterceptor extends Interceptor {
     debugPrint("├ HEADERS: ${options.headers}");
 
     if (options.data != null) {
-      debugPrint("├ BODY: ${const JsonEncoder.withIndent('  ').convert(options.data)}");
+      if (options.data is FormData) {
+        final formData = options.data as FormData;
+
+        debugPrint("├ FORM DATA FIELDS:");
+        for (final field in formData.fields) {
+          debugPrint("│ ${field.key}: ${field.value}");
+        }
+
+        debugPrint("├ FORM DATA FILES:");
+        for (final file in formData.files) {
+          debugPrint("│ ${file.key}: ${file.value.filename}");
+        }
+      } else {
+        debugPrint("├ BODY: ${const JsonEncoder.withIndent('  ').convert(options.data)}");
+      }
     }
 
     debugPrint("└──────────────────────────────────────────────");

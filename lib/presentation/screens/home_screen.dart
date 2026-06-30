@@ -42,12 +42,12 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> searchCandidate() async {
     final query = searchController.text.trim();
 
-    if (query.isEmpty) {
-      setState(() {
-        candidates = [];
-      });
-      return;
-    }
+    // if (query.isEmpty) {
+    //   setState(() {
+    //     candidates = [];
+    //   });
+    //   return;
+    // }
 
     final result = await LocalDb.instance.searchCandidate(query);
 
@@ -200,7 +200,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               await searchCandidate();
                             },
                             title: Text(candidate.candidateName),
-                            subtitle: Text(candidate.applicationId),
+                            subtitle: Text(candidate.applicationNumber),
                           ),
                         );
                       },

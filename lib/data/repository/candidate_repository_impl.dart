@@ -11,7 +11,7 @@ class CandidateRepositoryImpl implements CandidateRepository {
   CandidateRepositoryImpl(this.remoteDataSource, this.localDb);
 
   @override
-  Future<FetchCandidatesResponseModel> fetchCandidates({required int lastCandidateId, required int limit, required String examId}) async {
-    return await remoteDataSource.fetchCandidates(lastCandidateId: lastCandidateId, limit: limit, examId: examId);
+  Future<FetchCandidatesResponseModel> fetchCandidates({required int limit, required String examId}) async {
+    return await remoteDataSource.fetchCandidates(limit: limit, examId: examId);
   }
 }

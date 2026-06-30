@@ -22,7 +22,7 @@ class _CandidateDetailsScreenState extends State<CandidateDetailsScreen> {
   String? updatedBiometric;
 
   Future<void> refreshCandidate() async {
-    final latest = await LocalDb.instance.getCandidateByApplicationID(widget.candidate.applicationId);
+    final latest = await LocalDb.instance.getCandidateByApplicationID(widget.candidate.applicationNumber);
 
     if (latest != null) {
       setState(() {
@@ -59,8 +59,8 @@ class _CandidateDetailsScreenState extends State<CandidateDetailsScreen> {
               padding: const EdgeInsets.all(16),
               child: Column(
                 children: [
-                  detailRow("Candidate Id", candidate.candidateId),
-                  detailRow("Application Id", candidate.applicationId),
+                  detailRow("Roll Number", candidate.rollNumber),
+                  detailRow("Application Number", candidate.applicationNumber),
                   detailRow("First Name", candidate.candidateName),
                   detailRow("Father Name", candidate.fatherName ?? ""),
                   detailRow("Mother Name", candidate.motherName ?? ""),

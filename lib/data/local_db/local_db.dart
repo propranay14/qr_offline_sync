@@ -19,7 +19,7 @@ class LocalDb {
 
     return await openDatabase(
       path,
-      version: 3,
+      version: 6,
       onCreate: (db, version) async {
         await _createTable(db);
       },
@@ -34,8 +34,8 @@ class LocalDb {
     await db.execute('''
       CREATE TABLE candidates(
         id INTEGER PRIMARY KEY,
-        candidate_id TEXT,
-        application_id TEXT,
+        roll_number TEXT,
+        application_number TEXT,
         candidate_name TEXT,
         father_name TEXT,
         mother_name TEXT,
@@ -59,15 +59,13 @@ class LocalDb {
         updated_at TEXT,
         updated INTEGER,
         photo_path TEXT,
-        fingerprint_data TEXT
+        fingerprint_data TEXT,
+        is_synced INTEGER DEFAULT 0,
+        remarks TEXT,
+        capture_time TEXT,
+        device_id TEXT
       )
     ''');
-  }
-
-  Future<void> insertCandidate(CandidateModel candidate) async {
-    final db = await database;
-
-    await db.insert("candidates", candidate.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
   Future<void> insertCandidates(List<CandidateModel> candidates) async {
@@ -82,30 +80,12 @@ class LocalDb {
     await batch.commit(noResult: true);
   }
 
-  Future<int> getLastCandidateId() async {
-    final db = await database;
-
-    final result = await db.rawQuery("SELECT MAX(id) as last_id FROM candidates");
-
-    if (result.isNotEmpty && result.first["last_id"] != null) {
-      return result.first["last_id"] as int;
-    }
-
-    return 0;
-  }
-
   Future<List<CandidateModel>> searchCandidate(String query) async {
     final db = await database;
 
-    final result = await db.query(
-      "candidates",
-      where: '''
-      application_id LIKE ?
-      ''',
-      // application_id LIKE ? OR
-      // candidate_name LIKE ? OR
-      whereArgs: ['%$query%'],
-    );
+    if (query.trim().isEmpty) return [];
+
+    final result = await db.query("candidates", where: "application_number = ?", whereArgs: [query.trim()]);
 
     return result.map((e) => CandidateModel.fromMap(e)).toList();
   }
@@ -113,22 +93,57 @@ class LocalDb {
   Future<CandidateModel?> getCandidateByApplicationID(String applicationID) async {
     final db = await database;
 
-    final result = await db.query("candidates", where: "application_id = ?", whereArgs: [applicationID]);
+    final result = await db.query("candidates", where: "application_number = ?", whereArgs: [applicationID]);
 
     if (result.isEmpty) return null;
 
     return CandidateModel.fromMap(result.first);
   }
 
-  Future<void> updateCandidatePhoto(int id, String photoPath) async {
+  Future<void> updateCandidatePhoto(int id, String photoPath, int operatorId) async {
     final db = await database;
 
     await db.update(
       "candidates",
-      {"photo_path": photoPath, "profile_photo": photoPath, "face_status": "CAPTURED", "updated": 1},
+      {"photo_path": photoPath, "updated_by": operatorId, "capture_time": DateTime.now().toIso8601String(), "updated": 1},
       where: "id = ?",
       whereArgs: [id],
     );
+  }
+
+  Future<void> updateCandidateFingerprint(int id, String fingerprintPath, int operatorId) async {
+    final db = await database;
+
+    await db.update(
+      "candidates",
+      {"fingerprint_data": fingerprintPath, "updated_by": operatorId, "capture_time": DateTime.now().toIso8601String(), "updated": 1},
+      where: "id = ?",
+      whereArgs: [id],
+    );
+  }
+
+  Future<List<CandidateModel>> getPendingCandidates() async {
+    final db = await database;
+
+    final result = await db.query(
+      "candidates",
+      where: '''
+      updated = 1
+      AND (
+        photo_path IS NOT NULL AND photo_path != ''
+        OR
+        fingerprint_data IS NOT NULL AND fingerprint_data != ''
+      )
+    ''',
+    );
+
+    return result.map((e) => CandidateModel.fromMap(e)).toList();
+  }
+
+  Future<void> markCandidateSynced(int id) async {
+    final db = await database;
+
+    await db.update("candidates", {"is_synced": 1, "updated": 0}, where: "id = ?", whereArgs: [id]);
   }
 
   Future<void> clearCandidates() async {

@@ -10,12 +10,6 @@ class ApiConstants {
   /// Fetch Candidates
   static const String fetchCandidates = "syncCandidates";
 
-  // /// Candidate Update (future)
-  // static const String updateCandidate = "updateCandidate";
-  //
-  // /// Upload Photo (future if separate)
-  // static const String uploadPhoto = "uploadPhoto";
-  //
-  // /// Upload Biometric (future if separate)
-  // static const String uploadBiometric = "uploadBiometric";
+  /// Sync Candidates to Server
+  static const String updateCandidateBiometric = "updateCandidateBiometric";
 }

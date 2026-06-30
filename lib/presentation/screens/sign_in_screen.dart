@@ -25,8 +25,8 @@ class SignInScreen extends StatefulWidget {
 class _SignInScreenState extends State<SignInScreen> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
-  final TextEditingController usernameController = TextEditingController(text: "DeepakB");
-  final TextEditingController passwordController = TextEditingController(text: "12345");
+  final TextEditingController usernameController = TextEditingController(text: "propranay");
+  final TextEditingController passwordController = TextEditingController(text: "7890");
 
   bool isLoading = false;
   bool obscurePassword = true;
@@ -72,6 +72,7 @@ class _SignInScreenState extends State<SignInScreen> {
         roleName: loginResponse.userInfo.roleName,
         mobile: loginResponse.userInfo.contactMobile,
         email: loginResponse.userInfo.contactEmail,
+        examId: loginResponse.examInfo?.examId ?? '',
       );
 
       if (!mounted) return;
@@ -114,20 +115,14 @@ class _SignInScreenState extends State<SignInScreen> {
       final hasInternet = await PermissionService.hasInternet(context);
       if (!hasInternet) return;
 
-      /// LOCAL LAST ID
-      int localLastCandidateId = await LocalDb.instance.getLastCandidateId();
-
-      debugPrint("Local Last Candidate ID: $localLastCandidateId");
-
       /// SYNC
       final fetchUseCase = CandidatesUseCase(CandidateRepositoryImpl(CandidateRemoteDatasource(), LocalDb.instance));
 
       bool hasMore = true;
-      int nextCandidateId = localLastCandidateId;
 
       while (hasMore) {
         try {
-          final syncResponse = await fetchUseCase.call(lastCandidateId: nextCandidateId, limit: limit, examId: examId);
+          final syncResponse = await fetchUseCase.call(limit: limit, examId: examId);
 
           if (syncResponse.success && syncResponse.data.isNotEmpty) {
             await LocalDb.instance.insertCandidates(syncResponse.data);
@@ -135,13 +130,11 @@ class _SignInScreenState extends State<SignInScreen> {
             debugPrint("Saved ${syncResponse.data.length} candidates");
           }
 
-          nextCandidateId = syncResponse.nextCandidateId;
           hasMore = syncResponse.hasMore;
 
-          debugPrint("Next Candidate ID: $nextCandidateId | Has More: $hasMore");
+          debugPrint("Has More: $hasMore");
         } catch (e, stackTrace) {
           debugPrint("Sync Loop Error: $e");
-          debugPrint("Failed Candidate ID: $nextCandidateId");
           debugPrintStack(stackTrace: stackTrace);
 
           rethrow;

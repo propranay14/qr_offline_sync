@@ -12,6 +12,7 @@ class SessionManager {
   static const String roleNameKey = "role_name";
   static const String mobileKey = "mobile";
   static const String emailKey = "email";
+  static const String examIdKey = "exam_id";
   static const String lastInsertedIdKey = "last_inserted_id";
 
   static Future<void> saveLoginSession({
@@ -23,6 +24,7 @@ class SessionManager {
     required String roleName,
     required String mobile,
     required String email,
+    required String examId,
     // required int lastInsertedId,
   }) async {
     final prefs = await SharedPreferences.getInstance();
@@ -36,6 +38,7 @@ class SessionManager {
     await prefs.setString(roleNameKey, roleName);
     await prefs.setString(mobileKey, mobile);
     await prefs.setString(emailKey, email);
+    await prefs.setString(examIdKey, examId);
     // await prefs.setInt(lastInsertedIdKey, lastInsertedId);
   }
 
@@ -67,6 +70,11 @@ class SessionManager {
   static Future<String> getLastName() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString(lastNameKey) ?? "";
+  }
+
+  static Future<String> getExamId() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(examIdKey) ?? "";
   }
 
   static Future<String> getFullName() async {

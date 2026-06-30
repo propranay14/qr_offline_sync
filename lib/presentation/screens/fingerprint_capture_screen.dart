@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:qr_offline_sync/core/widgets/custom_cta_button.dart';
 
+import '../../core/storage/session_manager.dart';
+import '../../data/local_db/local_db.dart';
 import '../../data/model/fetch_candidates_response_model.dart';
 
 class FingerprintCaptureScreen extends StatefulWidget {
@@ -29,26 +31,13 @@ class _FingerprintCaptureScreenState extends State<FingerprintCaptureScreen> {
     // Demo SDK response
     fingerprintTemplate = "Rk1SACAyMAAAA_DEMO";
 
-    // await saveAttendance();
+    final operatorId = await SessionManager.getOperatorId();
 
+    await LocalDb.instance.updateCandidateFingerprint(widget.candidate.id, fingerprintTemplate ?? "", operatorId);
     setState(() {
       isWaiting = false;
     });
   }
-
-  // Future<void> saveAttendance() async {
-  //   final attendance = AttendanceModel(
-  //     id: DateTime.now().millisecondsSinceEpoch.toString(),
-  //     candidateId: widget.candidate.candidateId,
-  //     candidateName: widget.candidate.name,
-  //     className: widget.candidate.className,
-  //     photoPath: widget.photoPath,
-  //     fingerprintTemplate: fingerprintTemplate!,
-  //     synced: false,
-  //   );
-  //
-  //   await LocalDb.instance.insertAttendance(attendance);
-  // }
 
   @override
   Widget build(BuildContext context) {

@@ -6,7 +6,7 @@ class CandidatesUseCase {
 
   CandidatesUseCase(this.repository);
 
-  Future<FetchCandidatesResponseModel> call({required int lastCandidateId, required int limit, required String examId}) async {
-    return await repository.fetchCandidates(lastCandidateId: lastCandidateId, limit: limit, examId: examId);
+  Future<FetchCandidatesResponseModel> call({required int limit, required String examId}) async {
+    return await repository.fetchCandidates(limit: limit, examId: examId);
   }
 }
