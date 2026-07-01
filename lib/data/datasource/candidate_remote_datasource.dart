@@ -27,12 +27,13 @@ class CandidateRemoteDatasource {
     final formData = FormData.fromMap({
       "roll_number": candidate.rollNumber,
       "exam_id": examID,
-      "operator_id": candidate.updatedBy.toString(),
+      "operator_id": "DeepakB",
       "device_id": deviceId,
       "capture_time": candidate.captureTime,
       "remarks": candidate.remarks,
       if (candidate.photoPath != null) "photo": await MultipartFile.fromFile(candidate.photoPath!),
       if (candidate.fingerprintPath != null) "thumb": await MultipartFile.fromFile(candidate.fingerprintPath!),
+      // if (candidate.fingerprintPath != null) "thumb": candidate.fingerprintPath!,
     });
 
     final response = await dio.post(

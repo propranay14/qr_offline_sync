@@ -149,7 +149,11 @@ class CandidateModel {
       updatedBy: map["updated_by"],
       createdAt: map["created_at"],
       updatedAt: map["updated_at"] ?? "",
+      photoPath: map["photo_path"],
+      fingerprintPath: map["fingerprint_data"],
       isSynced: map["is_synced"] ?? 0,
+      remarks: map["remarks"],
+      captureTime: map["capture_time"],
     );
   }
 

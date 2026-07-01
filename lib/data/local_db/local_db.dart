@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -103,12 +104,15 @@ class LocalDb {
   Future<void> updateCandidatePhoto(int id, String photoPath, int operatorId) async {
     final db = await database;
 
-    await db.update(
+    final rows = await db.update(
       "candidates",
       {"photo_path": photoPath, "updated_by": operatorId, "capture_time": DateTime.now().toIso8601String(), "updated": 1},
       where: "id = ?",
       whereArgs: [id],
     );
+
+    debugPrint("Updated rows: $rows");
+    debugPrint("Saved photo path: $photoPath");
   }
 
   Future<void> updateCandidateFingerprint(int id, String fingerprintPath, int operatorId) async {

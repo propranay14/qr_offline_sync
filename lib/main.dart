@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/material.dart';
+import 'package:qr_offline_sync/core/service/connectivity_sync_service.dart';
 import 'package:workmanager/workmanager.dart';
 
 import 'core/service/sync_service.dart';
@@ -66,7 +67,8 @@ class _MyAppState extends State<MyApp> {
   }
 
   Future<void> registerBackgroundSync() async {
-    await Workmanager().registerPeriodicTask("candidate_sync_task", "candidate_sync_task", frequency: const Duration(minutes: 15));
+    await Workmanager().registerPeriodicTask("candidate_sync_task", "candidate_sync_task", frequency: const Duration(minutes: 1));
+    ConnectivitySyncService.startListening();
   }
 
   @override

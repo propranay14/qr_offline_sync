@@ -46,10 +46,12 @@ class _CandidateDetailsScreenState extends State<CandidateDetailsScreen> {
               radius: 70,
               backgroundImage: updatedPhotoPath != null
                   ? FileImage(File(updatedPhotoPath!))
-                  : candidate.profilePhoto != null
-                  ? FileImage(File(candidate.profilePhoto!))
+                  : candidate.photoPath != null && candidate.photoPath!.isNotEmpty
+                  ? FileImage(File(candidate.photoPath!))
                   : null,
-              child: updatedPhotoPath == null && candidate.profilePhoto == null ? const Icon(Icons.person, size: 70) : null,
+              child: updatedPhotoPath == null && (candidate.photoPath == null || candidate.photoPath!.isEmpty)
+                  ? const Icon(Icons.person, size: 70)
+                  : null,
             ),
 
             const SizedBox(height: 10),

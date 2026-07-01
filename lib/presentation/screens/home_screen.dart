@@ -23,6 +23,7 @@ class _HomeScreenState extends State<HomeScreen> {
   String role = "";
   String mobile = "";
   String email = "";
+  String examId = "";
 
   @override
   void initState() {
@@ -35,19 +36,13 @@ class _HomeScreenState extends State<HomeScreen> {
     role = await SessionManager.getRoleName();
     mobile = await SessionManager.getMobile();
     email = await SessionManager.getEmail();
+    examId = await SessionManager.getExamId();
 
     setState(() {});
   }
 
   Future<void> searchCandidate() async {
     final query = searchController.text.trim();
-
-    // if (query.isEmpty) {
-    //   setState(() {
-    //     candidates = [];
-    //   });
-    //   return;
-    // }
 
     final result = await LocalDb.instance.searchCandidate(query);
 
@@ -120,14 +115,14 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.primary,
         iconTheme: const IconThemeData(color: Colors.white),
-        title: const Text("Dashboard", style: TextStyle(color: Colors.white)),
+        title: const Text("Verification", style: TextStyle(color: Colors.white)),
         centerTitle: true,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            Text("Exam 1", style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
+            Text("Exam ID: $examId", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 10),
             Row(
               children: [
