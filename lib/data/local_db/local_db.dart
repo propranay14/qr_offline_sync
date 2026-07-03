@@ -20,7 +20,7 @@ class LocalDb {
 
     return await openDatabase(
       path,
-      version: 6,
+      version: 7,
       onCreate: (db, version) async {
         await _createTable(db);
       },
@@ -55,7 +55,7 @@ class LocalDb {
         fingerprint_template TEXT,
         face_status TEXT,
         fingerprint_status TEXT,
-        updated_by INTEGER,
+        updated_by TEXT,
         created_at TEXT,
         updated_at TEXT,
         updated INTEGER,
@@ -94,14 +94,14 @@ class LocalDb {
   Future<CandidateModel?> getCandidateByApplicationID(String applicationID) async {
     final db = await database;
 
-    final result = await db.query("candidates", where: "application_number = ?", whereArgs: [applicationID]);
+    final result = await db.query("candidates", where: "application_number = ?", whereArgs: [applicationID.trim()]);
 
     if (result.isEmpty) return null;
 
     return CandidateModel.fromMap(result.first);
   }
 
-  Future<void> updateCandidatePhoto(int id, String photoPath, int operatorId) async {
+  Future<void> updateCandidatePhoto(int id, String photoPath, String operatorId) async {
     final db = await database;
 
     final rows = await db.update(
@@ -115,7 +115,7 @@ class LocalDb {
     debugPrint("Saved photo path: $photoPath");
   }
 
-  Future<void> updateCandidateFingerprint(int id, String fingerprintPath, int operatorId) async {
+  Future<void> updateCandidateFingerprint(int id, String fingerprintPath, String operatorId) async {
     final db = await database;
 
     await db.update(

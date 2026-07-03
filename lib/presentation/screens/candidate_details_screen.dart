@@ -36,87 +36,107 @@ class _CandidateDetailsScreenState extends State<CandidateDetailsScreen> {
     final candidate = widget.candidate;
 
     return Scaffold(
-      appBar: AppBar(title: const Text("Candidate Profile")),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+      appBar: AppBar(
+        backgroundColor: Theme.of(context).colorScheme.primary,
+        iconTheme: const IconThemeData(color: Colors.white),
+        title: const Text("Candidate Details", style: TextStyle(color: Colors.white)),
+        centerTitle: true,
+      ),
+
+      body: SafeArea(
         child: Column(
           children: [
-            /// Profile Photo
-            CircleAvatar(
-              radius: 70,
-              backgroundImage: updatedPhotoPath != null
-                  ? FileImage(File(updatedPhotoPath!))
-                  : candidate.photoPath != null && candidate.photoPath!.isNotEmpty
-                  ? FileImage(File(candidate.photoPath!))
-                  : null,
-              child: updatedPhotoPath == null && (candidate.photoPath == null || candidate.photoPath!.isEmpty)
-                  ? const Icon(Icons.person, size: 70)
-                  : null,
-            ),
+            Expanded(
+              child: SingleChildScrollView(
+                child: Column(
+                  children: [
+                    const SizedBox(height: 10),
 
-            const SizedBox(height: 10),
-
-            /// Candidate Details
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                children: [
-                  detailRow("Roll Number", candidate.rollNumber),
-                  detailRow("Application Number", candidate.applicationNumber),
-                  detailRow("First Name", candidate.candidateName),
-                  detailRow("Father Name", candidate.fatherName ?? ""),
-                  detailRow("Mother Name", candidate.motherName ?? ""),
-                  detailRow("Gender", candidate.gender),
-                  detailRow("Mobile No.", candidate.mobileNo ?? ""),
-                  detailRow("Email", candidate.email ?? ""),
-                  detailRow("Biometric", updatedBiometric ?? (candidate.fingerprintTemplate != null ? "Available" : "Not Available")),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 10),
-
-            /// Update Photo Button
-            SizedBox(
-              width: double.infinity,
-              child: CustomCtaButton(
-                onPressed: () async {
-                  final result = await Navigator.push(context, MaterialPageRoute(builder: (_) => FaceCaptureScreen(candidate: candidate)));
-
-                  if (result != null) {
-                    setState(() {
-                      updatedPhotoPath = result;
-                    });
-                    await refreshCandidate();
-                  }
-                },
-                text: "Update Photo",
-              ),
-            ),
-
-            const SizedBox(height: 16),
-
-            /// Update Biometric Button
-            SizedBox(
-              width: double.infinity,
-              child: CustomCtaButton(
-                onPressed: () async {
-                  final result = await Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => FingerprintCaptureScreen(candidate: candidate, photoPath: updatedPhotoPath ?? ""),
+                    /// Candidate Photo
+                    CircleAvatar(
+                      radius: 70,
+                      backgroundImage: updatedPhotoPath != null
+                          ? FileImage(File(updatedPhotoPath!))
+                          : candidate.photoPath != null && candidate.photoPath!.isNotEmpty
+                          ? FileImage(File(candidate.photoPath!))
+                          : null,
+                      child: updatedPhotoPath == null && (candidate.photoPath == null || candidate.photoPath!.isEmpty)
+                          ? const Icon(Icons.person, size: 70)
+                          : null,
                     ),
-                  );
+                    const SizedBox(height: 10),
 
-                  if (result != null) {
-                    setState(() {
-                      updatedBiometric = result;
-                    });
-                    await refreshCandidate();
-                  }
-                },
-                text: "Update Biometric",
+                    /// Candidate Details
+                    Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        children: [
+                          detailRow("Roll Number", candidate.rollNumber),
+                          detailRow("Application Number", candidate.applicationNumber),
+                          detailRow("Candidate Name", candidate.candidateName),
+                          detailRow("Father Name", candidate.fatherName ?? ""),
+                          detailRow("Mother Name", candidate.motherName ?? ""),
+                          detailRow("Gender", candidate.gender),
+                          detailRow("Date of Birth", candidate.dob ?? ""),
+                          detailRow("Mobile No.", candidate.mobileNo ?? ""),
+                          detailRow("Email", candidate.email ?? ""),
+                          detailRow("Photo", candidate.photoPath != null ? "Available" : "Not Available"),
+                          detailRow("Fingerprint", candidate.fingerprintPath != null ? "Available" : "Not Available"),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                  ],
+                ),
               ),
+            ),
+
+            Column(
+              children: [
+                /// Update Photo Button
+                Container(
+                  margin: EdgeInsets.fromLTRB(24, 0, 24, 0),
+                  width: double.infinity,
+                  child: CustomCtaButton(
+                    onPressed: () async {
+                      final result = await Navigator.push(context, MaterialPageRoute(builder: (_) => FaceCaptureScreen(candidate: candidate)));
+
+                      if (result != null) {
+                        setState(() {
+                          updatedPhotoPath = result;
+                        });
+                        await refreshCandidate();
+                      }
+                    },
+                    text: "Update Photo",
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                /// Update Biometric Button
+                Container(
+                  margin: EdgeInsets.fromLTRB(24, 0, 24, 10),
+                  width: double.infinity,
+                  child: CustomCtaButton(
+                    onPressed: () async {
+                      final result = await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => FingerprintCaptureScreen(candidate: candidate, photoPath: updatedPhotoPath ?? ""),
+                        ),
+                      );
+
+                      if (result != null) {
+                        setState(() {
+                          updatedBiometric = result;
+                        });
+                        await refreshCandidate();
+                      }
+                    },
+                    text: "Update Biometric",
+                  ),
+                ),
+              ],
             ),
           ],
         ),
@@ -133,7 +153,7 @@ class _CandidateDetailsScreenState extends State<CandidateDetailsScreen> {
             flex: 4,
             child: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
           ),
-          Expanded(flex: 6, child: Text(value)),
+          Expanded(flex: 6, child: Text(value, overflow: TextOverflow.ellipsis, maxLines: 1)),
         ],
       ),
     );

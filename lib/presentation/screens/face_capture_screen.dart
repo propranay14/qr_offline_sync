@@ -64,7 +64,12 @@ class _FaceCaptureScreenState extends State<FaceCaptureScreen> {
     }
 
     return Scaffold(
-      appBar: AppBar(title: const Text("Capture Face"), automaticallyImplyLeading: false),
+      appBar: AppBar(
+        title: const Text("Capture Face", style: TextStyle(color: Colors.white)),
+        centerTitle: true,
+        backgroundColor: Theme.of(context).colorScheme.primary,
+        iconTheme: const IconThemeData(color: Colors.white),
+      ),
       body: Column(
         children: [
           Expanded(
@@ -93,9 +98,12 @@ class _FaceCaptureScreenState extends State<FaceCaptureScreen> {
                   ElevatedButton(
                     onPressed: () async {
                       try {
-                        final operatorId = await SessionManager.getOperatorId();
+                        final session = await SessionManager.getLoginSession();
+                        if (session == null) return;
 
-                        await LocalDb.instance.updateCandidatePhoto(widget.candidate.id, capturedImage!.path, operatorId);
+                        final user = session["user_info"];
+
+                        await LocalDb.instance.updateCandidatePhoto(widget.candidate.id, capturedImage!.path, user["username"] ?? "");
                         if (!mounted) return;
 
                         Navigator.pop(context, capturedImage!.path);

@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:qr_offline_sync/core/service/permission_service.dart';
 import 'package:qr_offline_sync/presentation/screens/candidate_details_screen.dart';
 import 'package:qr_offline_sync/presentation/screens/qr_scanner_screen.dart';
 import 'package:qr_offline_sync/presentation/screens/sign_in_screen.dart';
 
 import '../../core/storage/session_manager.dart';
+import '../../data/datasource/candidate_remote_datasource.dart';
 import '../../data/local_db/local_db.dart';
 import '../../data/model/fetch_candidates_response_model.dart';
+import '../../data/repository/candidate_repository_impl.dart';
+import '../../domain/usecase/candidates_usecase.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -20,10 +22,17 @@ class _HomeScreenState extends State<HomeScreen> {
   final TextEditingController searchController = TextEditingController();
 
   String operatorName = "";
+  String username = "";
   String role = "";
   String mobile = "";
   String email = "";
+
   String examId = "";
+  String examDate = "";
+  String examStartTime = "";
+  String examEndTime = "";
+  String examRemarks = "";
+  String examStatus = "";
 
   @override
   void initState() {
@@ -32,11 +41,26 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> loadOperator() async {
-    operatorName = await SessionManager.getFullName();
-    role = await SessionManager.getRoleName();
-    mobile = await SessionManager.getMobile();
-    email = await SessionManager.getEmail();
-    examId = await SessionManager.getExamId();
+    final session = await SessionManager.getLoginSession();
+
+    if (session == null) return;
+
+    final user = session["user_info"];
+    final exam = session["exam_info"];
+
+    operatorName = "${user["first_name"]} ${user["middle_name"] ?? ""} ${user["last_name"]}".trim();
+
+    username = user["username"] ?? "";
+    role = user["role_name"] ?? "";
+    mobile = user["contact_mobile"] ?? "";
+    email = user["contact_email"] ?? "";
+
+    examId = exam?["exam_id"] ?? "";
+    examDate = exam?["exam_date"] ?? "";
+    examStartTime = exam?["exam_start_time"] ?? "";
+    examEndTime = exam?["exam_end_time"] ?? "";
+    examRemarks = exam?["remarks"] ?? "";
+    examStatus = exam?["status"] ?? "";
 
     setState(() {});
   }
@@ -55,61 +79,86 @@ class _HomeScreenState extends State<HomeScreen> {
     Navigator.push(context, MaterialPageRoute(builder: (_) => const QRScannerScreen()));
   }
 
+  Widget infoTile(IconData icon, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Row(
+        children: [
+          Icon(icon, color: Colors.white70, size: 14),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(color: Colors.white70, fontSize: 12),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       drawer: Drawer(
-        child: Column(
-          children: [
-            SizedBox(
-              height: 230,
-              width: double.infinity,
-              child: DrawerHeader(
-                decoration: BoxDecoration(color: Theme.of(context).colorScheme.primary),
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.fromLTRB(16, 50, 16, 20),
+                color: Theme.of(context).colorScheme.primary,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Center(child: const CircleAvatar(radius: 28, child: Icon(Icons.person, size: 30))),
-                    const SizedBox(height: 10),
+                    const Center(child: CircleAvatar(radius: 32, child: Icon(Icons.person, size: 34))),
+          
+                    const SizedBox(height: 12),
+          
                     Text(
                       operatorName,
                       style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
                     ),
-                    Text(role, style: TextStyle(color: Colors.white70, fontSize: 12)),
-                    Text(mobile, style: const TextStyle(color: Colors.white70, fontSize: 12)),
-                    Text(email, style: const TextStyle(color: Colors.white70, fontSize: 12)),
+          
+                    const SizedBox(height: 4),
+          
+                    Text("@$username", style: const TextStyle(color: Colors.white70, fontSize: 13)),
+          
+                    const Divider(color: Colors.white54),
+          
+                    infoTile(Icons.badge, role),
+                    infoTile(Icons.phone, mobile),
+                    infoTile(Icons.email, email),
+                    const SizedBox(height: 8),
+
+                    const Text(
+                      "Exam Details",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
+
+                    const SizedBox(height: 6),
+
+                    infoTile(Icons.confirmation_number, examId),
+                    infoTile(Icons.calendar_today, examDate),
+                    infoTile(Icons.access_time, "$examStartTime - $examEndTime"),
+                    infoTile(Icons.info_outline, examStatus),
                   ],
                 ),
               ),
-            ),
-
-            ListTile(
-              leading: const Icon(Icons.search),
-              title: const Text("Search Candidate"),
-              onTap: () {
-                Navigator.pop(context);
-              },
-            ),
-
-            const Divider(),
-
-            ListTile(
-              leading: const Icon(Icons.logout, color: Colors.red),
-              title: const Text("Logout"),
-              onTap: () async {
-                Navigator.pop(context);
-
-                final hasPending = await PermissionService.hasInternet(null); /*await LocalDb.instance.hasPendingSync()*/
-
-                if (!hasPending) {
-                  await showPendingSyncDialog(context);
-                } else {
-                  await showLogoutDialog(context);
-                }
-              },
-            ),
-          ],
+          
+              ListTile(leading: const Icon(Icons.search), title: const Text("Search Candidate")),
+          
+              ListTile(
+                leading: const Icon(Icons.logout, color: Colors.red),
+                title: const Text("Logout"),
+              ),
+            ],
+          ),
         ),
       ),
       appBar: AppBar(
@@ -117,6 +166,27 @@ class _HomeScreenState extends State<HomeScreen> {
         iconTheme: const IconThemeData(color: Colors.white),
         title: const Text("Verification", style: TextStyle(color: Colors.white)),
         centerTitle: true,
+        actions: [
+          IconButton(
+            onPressed: () async {
+              final fetchUseCase = CandidatesUseCase(CandidateRepositoryImpl(CandidateRemoteDatasource(), LocalDb.instance));
+              final localDb = LocalDb.instance;
+              final pending = await localDb.getPendingCandidates();
+              for (final candidate in pending) {
+                try {
+                  final uploaded = await fetchUseCase.uploadCandidateBiometric(candidate, examId);
+
+                  if (uploaded) {
+                    await localDb.markCandidateSynced(candidate.id);
+                  }
+                } catch (e, stacktrace) {
+                  debugPrintStack(stackTrace: stacktrace);
+                }
+              }
+            },
+            icon: Icon(Icons.cloud_upload_outlined),
+          ),
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
@@ -136,26 +206,15 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: TextField(
                       controller: searchController,
                       decoration: const InputDecoration(
-                        hintText: "Application ID",
+                        hintText: "Application Number",
                         contentPadding: EdgeInsets.symmetric(horizontal: 16),
                         border: InputBorder.none,
                       ),
+                      textInputAction: TextInputAction.search,
+                      onSubmitted: (value) async {
+                        await searchCandidate();
+                      },
                     ),
-                  ),
-                ),
-
-                const SizedBox(width: 8),
-
-                InkWell(
-                  onTap: scanQr,
-                  child: Container(
-                    height: 55,
-                    width: 60,
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey.shade400),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: const Icon(Icons.qr_code_scanner, size: 28),
                   ),
                 ),
 
@@ -164,10 +223,38 @@ class _HomeScreenState extends State<HomeScreen> {
                 Container(
                   height: 55,
                   width: 60,
-                  decoration: BoxDecoration(color: Theme.of(context).colorScheme.primary, borderRadius: BorderRadius.circular(6)),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.primary,
+                    borderRadius: BorderRadius.circular(6),
+                    gradient: const LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [Color(0xFFA5D6A7), Color(0xFF4FC3A1)],
+                    ),
+                  ),
+                  child: IconButton(
+                    onPressed: scanQr,
+                    icon: const Icon(Icons.qr_code_scanner, color: Colors.black, size: 28),
+                  ),
+                ),
+
+                const SizedBox(width: 8),
+
+                Container(
+                  height: 55,
+                  width: 60,
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.primary,
+                    borderRadius: BorderRadius.circular(6),
+                    gradient: const LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [Color(0xFFA5D6A7), Color(0xFF4FC3A1)],
+                    ),
+                  ),
                   child: IconButton(
                     onPressed: searchCandidate,
-                    icon: const Icon(Icons.search, color: Colors.white),
+                    icon: const Icon(Icons.search, color: Colors.black),
                   ),
                 ),
               ],

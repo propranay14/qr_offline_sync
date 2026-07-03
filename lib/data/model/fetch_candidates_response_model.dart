@@ -53,7 +53,7 @@ class CandidateModel {
   final String? fingerprintTemplate;
   final String? faceStatus;
   final String? fingerprintStatus;
-  final int? updatedBy;
+  final String? updatedBy;
   final String? createdAt;
 
   final String updatedAt;

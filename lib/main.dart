@@ -75,7 +75,7 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(primarySwatch: Colors.blue),
+      theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: Color(0xFF023020)), useMaterial3: true),
       home: const SplashScreen(),
     );
   }

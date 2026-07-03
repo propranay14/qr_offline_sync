@@ -31,9 +31,12 @@ class _FingerprintCaptureScreenState extends State<FingerprintCaptureScreen> {
     // Demo SDK response
     fingerprintTemplate = "Rk1SACAyMAAAA_DEMO";
 
-    final operatorId = await SessionManager.getOperatorId();
+    final session = await SessionManager.getLoginSession();
+    if (session == null) return;
 
-    await LocalDb.instance.updateCandidateFingerprint(widget.candidate.id, fingerprintTemplate ?? "", operatorId);
+    final user = session["user_info"];
+
+    await LocalDb.instance.updateCandidateFingerprint(widget.candidate.id, fingerprintTemplate ?? "", user["username"] ?? "");
     setState(() {
       isWaiting = false;
     });
@@ -42,7 +45,12 @@ class _FingerprintCaptureScreenState extends State<FingerprintCaptureScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Fingerprint Capture"), automaticallyImplyLeading: false),
+      appBar: AppBar(
+        title: const Text("Fingerprint Capture", style: TextStyle(color: Colors.white)),
+        centerTitle: true,
+        backgroundColor: Theme.of(context).colorScheme.primary,
+        iconTheme: const IconThemeData(color: Colors.white),
+      ),
       body: Center(
         child: isWaiting
             ? const CircularProgressIndicator()

@@ -27,21 +27,22 @@ class CandidateRemoteDatasource {
     final formData = FormData.fromMap({
       "roll_number": candidate.rollNumber,
       "exam_id": examID,
-      "operator_id": "DeepakB",
+      "operator_id": candidate.updatedBy,
       "device_id": deviceId,
       "capture_time": candidate.captureTime,
       "remarks": candidate.remarks,
       if (candidate.photoPath != null) "photo": await MultipartFile.fromFile(candidate.photoPath!),
-      if (candidate.fingerprintPath != null) "thumb": await MultipartFile.fromFile(candidate.fingerprintPath!),
-      // if (candidate.fingerprintPath != null) "thumb": candidate.fingerprintPath!,
+      // if (candidate.fingerprintPath != null) "thumb": await MultipartFile.fromFile(candidate.fingerprintPath!),
     });
 
     final response = await dio.post(
       ApiConstants.updateCandidateBiometric,
       data: formData,
-      options: Options(contentType: "multipart/form-data"),
+      options: Options(headers: {"Accept": "/", "User-Agent": "PostmanRuntime/7.54.0", "Cookie": "PHPSESSID=21576d5c329612e0d2dc64a5d26dc2ce"}),
     );
 
     return response.data["success"] == true;
   }
 }
+//logout reset data
+//background foreground

@@ -63,17 +63,7 @@ class _SignInScreenState extends State<SignInScreen> {
       await fetchCandidates(loginResponse.fetchLimit, loginResponse.examInfo?.examId ?? '');
 
       /// Save Session for Operator
-      await SessionManager.saveLoginSession(
-        operatorId: loginResponse.userInfo.id,
-        username: loginResponse.userInfo.username,
-        firstName: loginResponse.userInfo.firstName,
-        middleName: loginResponse.userInfo.middleName ?? "",
-        lastName: loginResponse.userInfo.lastName,
-        roleName: loginResponse.userInfo.roleName,
-        mobile: loginResponse.userInfo.contactMobile,
-        email: loginResponse.userInfo.contactEmail,
-        examId: loginResponse.examInfo?.examId ?? '',
-      );
+      await SessionManager.saveLoginSession(loginResponse.toJson());
 
       if (!mounted) return;
       Fluttertoast.showToast(msg: "Login successful");

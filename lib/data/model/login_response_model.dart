@@ -14,6 +14,10 @@ class LoginResponseModel {
       examInfo: json["exam_info"] != null ? ExamInfo.fromJson(json["exam_info"]) : null,
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {"success": success, "user_info": userInfo.toJson(), "fetch_limit": fetchLimit, "exam_info": examInfo?.toJson()};
+  }
 }
 
 class UserInfo {
@@ -55,6 +59,21 @@ class UserInfo {
       isDeleted: json["is_deleted"] ?? "",
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      "id": id,
+      "is_deleted": isDeleted,
+      "is_active": isActive,
+      "username": username,
+      "first_name": firstName,
+      "middle_name": middleName,
+      "last_name": lastName,
+      "contact_mobile": contactMobile,
+      "contact_email": contactEmail,
+      "role_name": roleName,
+    };
+  }
 }
 
 class ExamInfo {
@@ -89,5 +108,18 @@ class ExamInfo {
       createdAt: json["created_at"] ?? "",
       status: json["status"] ?? "",
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      "id": id,
+      "exam_id": examId,
+      "exam_date": examDate,
+      "exam_start_time": examStartTime,
+      "exam_end_time": examEndTime,
+      "remarks": remarks,
+      "created_at": createdAt,
+      "status": status,
+    };
   }
 }

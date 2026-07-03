@@ -14,4 +14,10 @@ class CandidateRepositoryImpl implements CandidateRepository {
   Future<FetchCandidatesResponseModel> fetchCandidates({required int limit, required String examId}) async {
     return await remoteDataSource.fetchCandidates(limit: limit, examId: examId);
   }
+
+  /// Upload candidate biometric
+  @override
+  Future<bool> uploadCandidateBiometric(CandidateModel candidate, String examID) async {
+    return await remoteDataSource.uploadCandidateBiometric(candidate, examID);
+  }
 }
