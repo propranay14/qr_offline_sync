@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:qr_offline_sync/presentation/screens/candidate_details_screen.dart';
 import 'package:qr_offline_sync/presentation/screens/qr_scanner_screen.dart';
 import 'package:qr_offline_sync/presentation/screens/sign_in_screen.dart';
@@ -113,20 +114,20 @@ class _HomeScreenState extends State<HomeScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Center(child: CircleAvatar(radius: 32, child: Icon(Icons.person, size: 34))),
-          
+
                     const SizedBox(height: 12),
-          
+
                     Text(
                       operatorName,
                       style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
                     ),
-          
+
                     const SizedBox(height: 4),
-          
+
                     Text("@$username", style: const TextStyle(color: Colors.white70, fontSize: 13)),
-          
+
                     const Divider(color: Colors.white54),
-          
+
                     infoTile(Icons.badge, role),
                     infoTile(Icons.phone, mobile),
                     infoTile(Icons.email, email),
@@ -134,11 +135,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
                     const Text(
                       "Exam Details",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                      ),
+                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
                     ),
 
                     const SizedBox(height: 6),
@@ -150,12 +147,31 @@ class _HomeScreenState extends State<HomeScreen> {
                   ],
                 ),
               ),
-          
-              ListTile(leading: const Icon(Icons.search), title: const Text("Search Candidate")),
-          
+
+              ListTile(
+                leading: const Icon(Icons.search),
+                title: const Text("Search Candidate"),
+                onTap: () {
+                  Navigator.pop(context);
+                },
+              ),
+
+              const Divider(),
+
               ListTile(
                 leading: const Icon(Icons.logout, color: Colors.red),
                 title: const Text("Logout"),
+                onTap: () async {
+                  Navigator.pop(context);
+
+                  final hasPending = await LocalDb.instance.getPendingCandidates();
+
+                  if (hasPending.isNotEmpty) {
+                    await showPendingSyncDialog(context);
+                  } else {
+                    await showLogoutDialog(context);
+                  }
+                },
               ),
             ],
           ),
@@ -172,11 +188,16 @@ class _HomeScreenState extends State<HomeScreen> {
               final fetchUseCase = CandidatesUseCase(CandidateRepositoryImpl(CandidateRemoteDatasource(), LocalDb.instance));
               final localDb = LocalDb.instance;
               final pending = await localDb.getPendingCandidates();
+              if (pending.isEmpty) {
+                Fluttertoast.showToast(msg: "No pending candidates to sync");
+                return;
+              }
               for (final candidate in pending) {
                 try {
                   final uploaded = await fetchUseCase.uploadCandidateBiometric(candidate, examId);
 
                   if (uploaded) {
+                    Fluttertoast.showToast(msg: "Candidates synced successfully");
                     await localDb.markCandidateSynced(candidate.id);
                   }
                 } catch (e, stacktrace) {

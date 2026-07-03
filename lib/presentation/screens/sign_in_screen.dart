@@ -25,8 +25,8 @@ class SignInScreen extends StatefulWidget {
 class _SignInScreenState extends State<SignInScreen> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
-  final TextEditingController usernameController = TextEditingController(text: "propranay");
-  final TextEditingController passwordController = TextEditingController(text: "7890");
+  final TextEditingController usernameController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
 
   bool isLoading = false;
   bool obscurePassword = true;
