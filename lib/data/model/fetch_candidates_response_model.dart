@@ -43,6 +43,7 @@ class CandidateModel {
   final String? pincode;
   final String? biometricStatus;
   final String? photoPath;
+  final String? mobilePhoto;
   final String? fingerprintPath;
   final int isSynced;
   final String? remarks;
@@ -84,6 +85,7 @@ class CandidateModel {
     this.createdAt,
     required this.updatedAt,
     this.photoPath,
+    this.mobilePhoto,
     this.fingerprintPath,
     required this.isSynced,
     this.remarks,
@@ -117,6 +119,8 @@ class CandidateModel {
       fingerprintStatus: json["fingerprint_status"],
       updatedBy: json["updated_by"],
       createdAt: json["created_at"],
+      photoPath: json["photo_path"],
+      mobilePhoto: json["mobile_photo"],
 
       updatedAt: json["updated_at"] ?? "",
       isSynced: 0,
@@ -150,6 +154,7 @@ class CandidateModel {
       createdAt: map["created_at"],
       updatedAt: map["updated_at"] ?? "",
       photoPath: map["photo_path"],
+      mobilePhoto: map["mobile_photo"],
       fingerprintPath: map["fingerprint_data"],
       isSynced: map["is_synced"] ?? 0,
       remarks: map["remarks"],
@@ -188,6 +193,7 @@ class CandidateModel {
       "updated_at": updatedAt,
 
       "photo_path": photoPath,
+      "mobile_photo": mobilePhoto,
       "fingerprint_data": fingerprintPath,
       "is_synced": isSynced,
       "remarks": remarks,

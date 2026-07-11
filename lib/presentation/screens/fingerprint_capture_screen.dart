@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:qr_offline_sync/core/widgets/custom_cta_button.dart';
 
+import '../../core/service/mantra_service.dart';
 import '../../core/storage/session_manager.dart';
 import '../../data/local_db/local_db.dart';
 import '../../data/model/fetch_candidates_response_model.dart';
@@ -16,30 +18,56 @@ class FingerprintCaptureScreen extends StatefulWidget {
 }
 
 class _FingerprintCaptureScreenState extends State<FingerprintCaptureScreen> {
+  static const MethodChannel _channel = MethodChannel("mantra_mfs100");
+
   bool isWaiting = true;
+  String status = "Place your finger on the scanner...";
   String? fingerprintTemplate;
 
   @override
   void initState() {
     super.initState();
-    waitForFingerprint();
+    captureFingerprint();
   }
 
-  Future<void> waitForFingerprint() async {
-    await Future.delayed(const Duration(seconds: 4));
+  Future<void> captureFingerprint() async {
+    try {
+      await MantraService.initialize();
 
-    // Demo SDK response
-    fingerprintTemplate = "Rk1SACAyMAAAA_DEMO";
+      final result = await MantraService.capture();
 
-    final session = await SessionManager.getLoginSession();
-    if (session == null) return;
+      fingerprintTemplate = result["template"];
 
-    final user = session["user_info"];
+      final session = await SessionManager.getLoginSession();
+      if (session == null) return;
 
-    await LocalDb.instance.updateCandidateFingerprint(widget.candidate.id, fingerprintTemplate ?? "", user["username"] ?? "");
-    setState(() {
-      isWaiting = false;
-    });
+      final username = session["user_info"]["username"] ?? "";
+
+      await LocalDb.instance.updateCandidateFingerprint(
+        widget.candidate.id,
+        fingerprintTemplate!,
+        username,
+      );
+
+      setState(() {
+        isWaiting = false;
+        status = "Fingerprint captured successfully";
+      });
+    } on PlatformException catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        isWaiting = false;
+        status = e.message ?? "Capture failed";
+      });
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        isWaiting = false;
+        status = e.toString();
+      });
+    }
   }
 
   @override
@@ -53,21 +81,28 @@ class _FingerprintCaptureScreenState extends State<FingerprintCaptureScreen> {
       ),
       body: Center(
         child: isWaiting
-            ? const CircularProgressIndicator()
+            ? Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const CircularProgressIndicator(),
+                  const SizedBox(height: 24),
+                  Text(status, textAlign: TextAlign.center, style: const TextStyle(fontSize: 16)),
+                ],
+              )
             : Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.check_circle, size: 100),
+                  const Icon(Icons.check_circle, color: Colors.green, size: 100),
                   const SizedBox(height: 20),
-                  const Text("Saved Successfully"),
-                  const SizedBox(height: 20),
+                  Text(status, style: const TextStyle(fontSize: 18)),
+                  const SizedBox(height: 40),
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 80, vertical: 20),
+                    padding: const EdgeInsets.symmetric(horizontal: 80),
                     child: CustomCtaButton(
+                      text: "Done",
                       onPressed: () {
                         Navigator.pop(context);
                       },
-                      text: "Done",
                     ),
                   ),
                 ],

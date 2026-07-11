@@ -20,7 +20,7 @@ class LocalDb {
 
     return await openDatabase(
       path,
-      version: 7,
+      version: 8,
       onCreate: (db, version) async {
         await _createTable(db);
       },
@@ -60,6 +60,7 @@ class LocalDb {
         updated_at TEXT,
         updated INTEGER,
         photo_path TEXT,
+        mobile_photo TEXT,
         fingerprint_data TEXT,
         is_synced INTEGER DEFAULT 0,
         remarks TEXT,

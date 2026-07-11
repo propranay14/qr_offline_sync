@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:qr_offline_sync/core/widgets/custom_cta_button.dart';
 
+import '../../core/constants/api_constants.dart';
 import '../../data/local_db/local_db.dart';
 import '../../data/model/fetch_candidates_response_model.dart';
 import 'face_capture_screen.dart';
@@ -34,10 +35,20 @@ class _CandidateDetailsScreenState extends State<CandidateDetailsScreen> {
   @override
   Widget build(BuildContext context) {
     final candidate = widget.candidate;
+    String? imageUrl;
+
+    if (candidate.mobilePhoto != null &&
+        candidate.mobilePhoto!.isNotEmpty) {
+      imageUrl =
+      "${ApiConstants.baseUrl}${candidate.mobilePhoto!.replaceAll("//", "/")}";
+    }
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.primary,
+        backgroundColor: Theme
+            .of(context)
+            .colorScheme
+            .primary,
         iconTheme: const IconThemeData(color: Colors.white),
         title: const Text("Candidate Details", style: TextStyle(color: Colors.white)),
         centerTitle: true,
@@ -57,10 +68,16 @@ class _CandidateDetailsScreenState extends State<CandidateDetailsScreen> {
                       radius: 70,
                       backgroundImage: updatedPhotoPath != null
                           ? FileImage(File(updatedPhotoPath!))
-                          : candidate.photoPath != null && candidate.photoPath!.isNotEmpty
+                          : candidate.photoPath != null &&
+                          candidate.photoPath!.isNotEmpty
                           ? FileImage(File(candidate.photoPath!))
+                          : imageUrl != null
+                          ? NetworkImage(imageUrl)
                           : null,
-                      child: updatedPhotoPath == null && (candidate.photoPath == null || candidate.photoPath!.isEmpty)
+                      child: updatedPhotoPath == null &&
+                          (candidate.photoPath == null ||
+                              candidate.photoPath!.isEmpty) &&
+                          imageUrl == null
                           ? const Icon(Icons.person, size: 70)
                           : null,
                     ),
@@ -93,6 +110,7 @@ class _CandidateDetailsScreenState extends State<CandidateDetailsScreen> {
 
             Column(
               children: [
+
                 /// Update Photo Button
                 Container(
                   margin: EdgeInsets.fromLTRB(24, 0, 24, 0),

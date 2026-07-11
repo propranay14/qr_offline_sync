@@ -33,6 +33,11 @@ class PermissionService {
     return _handleStatus(context, status, "Camera");
   }
 
+  static Future<bool> requestLocation(BuildContext context) async {
+    final status = await Permission.location.request();
+    return _handleStatus(context, status, "Location");
+  }
+
   static Future<bool> requestBluetooth(BuildContext context) async {
     final status = await Permission.bluetoothConnect.request();
     return _handleStatus(context, status, "Bluetooth");

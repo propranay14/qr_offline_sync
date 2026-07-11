@@ -42,6 +42,15 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+
+        ndk {
+            abiFilters += listOf(
+                "armeabi-v7a",
+                "x86",
+                "arm64-v8a",
+                "x86_64"
+            )
+        }
     }
 
     signingConfigs {
@@ -60,6 +69,16 @@ android {
             isShrinkResources = false
         }
     }
+
+    sourceSets {
+        getByName("main") {
+            jniLibs.srcDirs("src/main/jniLibs")
+        }
+    }
+}
+
+dependencies {
+    implementation(files("libs/mantra.mfs100.jar"))
 }
 
 flutter {

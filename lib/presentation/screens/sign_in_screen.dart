@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:qr_offline_sync/domain/usecase/validation_form.dart';
+import 'package:qr_offline_sync/presentation/screens/live_photo_screen.dart';
 
 import '../../core/service/permission_service.dart';
 import '../../core/storage/session_manager.dart';
@@ -69,7 +70,7 @@ class _SignInScreenState extends State<SignInScreen> {
       Fluttertoast.showToast(msg: "Login successful");
 
       /// Navigate to Home Screen
-      Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const HomeScreen()));
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const LivePhotoScreen()));
     } catch (e, stackTrace) {
       debugPrint("Login Error: $e");
       debugPrint("StackTrace: $stackTrace");
