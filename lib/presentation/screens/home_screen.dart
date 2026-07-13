@@ -28,12 +28,12 @@ class _HomeScreenState extends State<HomeScreen> {
   String mobile = "";
   String email = "";
 
-  String examId = "";
-  String examDate = "";
-  String examStartTime = "";
-  String examEndTime = "";
-  String examRemarks = "";
-  String examStatus = "";
+  String? examId = "";
+  String? examDate = "";
+  String? examStartTime = "";
+  String? examEndTime = "";
+  String? examRemarks = "";
+  String? examStatus = "";
 
   @override
   void initState() {
@@ -46,22 +46,22 @@ class _HomeScreenState extends State<HomeScreen> {
 
     if (session == null) return;
 
-    final user = session["user_info"];
-    final exam = session["exam_info"];
+    final user = session.userInfo;
+    final exam = session.examInfo;
 
-    operatorName = "${user["first_name"]} ${user["middle_name"] ?? ""} ${user["last_name"]}".trim();
+    operatorName = "${user.firstName} ${user.middleName ?? ""} ${user.lastName}".trim();
 
-    username = user["username"] ?? "";
-    role = user["role_name"] ?? "";
-    mobile = user["contact_mobile"] ?? "";
-    email = user["contact_email"] ?? "";
+    username = user.username;
+    role = user.roleName;
+    mobile = user.contactMobile;
+    email = user.contactEmail;
 
-    examId = exam?["exam_id"] ?? "";
-    examDate = exam?["exam_date"] ?? "";
-    examStartTime = exam?["exam_start_time"] ?? "";
-    examEndTime = exam?["exam_end_time"] ?? "";
-    examRemarks = exam?["remarks"] ?? "";
-    examStatus = exam?["status"] ?? "";
+    examId = exam?.examId;
+    examDate = exam?.examDate;
+    examStartTime = exam?.examStartTime;
+    examEndTime = exam?.examEndTime;
+    examRemarks = exam?.remarks ?? "";
+    examStatus = exam?.status;
 
     setState(() {});
   }
@@ -80,7 +80,9 @@ class _HomeScreenState extends State<HomeScreen> {
     Navigator.push(context, MaterialPageRoute(builder: (_) => const QRScannerScreen()));
   }
 
-  Widget infoTile(IconData icon, String value) {
+  Widget infoTile(IconData icon, String? value) {
+    if (value == null) return const SizedBox();
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2),
       child: Row(
@@ -131,19 +133,25 @@ class _HomeScreenState extends State<HomeScreen> {
                     infoTile(Icons.badge, role),
                     infoTile(Icons.phone, mobile),
                     infoTile(Icons.email, email),
-                    const SizedBox(height: 8),
 
-                    const Text(
-                      "Exam Details",
-                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
-                    ),
+                    (examId == null)
+                        ? SizedBox()
+                        : Column(
+                            children: [
+                              const SizedBox(height: 8),
+                              const Text(
+                                "Exam Details",
+                                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                              ),
 
-                    const SizedBox(height: 6),
+                              const SizedBox(height: 6),
 
-                    infoTile(Icons.confirmation_number, examId),
-                    infoTile(Icons.calendar_today, examDate),
-                    infoTile(Icons.access_time, "$examStartTime - $examEndTime"),
-                    infoTile(Icons.info_outline, examStatus),
+                              infoTile(Icons.confirmation_number, examId),
+                              infoTile(Icons.calendar_today, examDate),
+                              infoTile(Icons.access_time, "$examStartTime - $examEndTime"),
+                              infoTile(Icons.info_outline, examStatus),
+                            ],
+                          ),
                   ],
                 ),
               ),
@@ -194,7 +202,7 @@ class _HomeScreenState extends State<HomeScreen> {
               }
               for (final candidate in pending) {
                 try {
-                  final uploaded = await fetchUseCase.uploadCandidateBiometric(candidate, examId);
+                  final uploaded = await fetchUseCase.uploadCandidateBiometric(candidate, examId ?? "");
 
                   if (uploaded) {
                     Fluttertoast.showToast(msg: "Candidates synced successfully");

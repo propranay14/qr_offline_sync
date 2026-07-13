@@ -101,9 +101,9 @@ class _FaceCaptureScreenState extends State<FaceCaptureScreen> {
                         final session = await SessionManager.getLoginSession();
                         if (session == null) return;
 
-                        final user = session["user_info"];
+                        final user = session.userInfo;
 
-                        await LocalDb.instance.updateCandidatePhoto(widget.candidate.id, capturedImage!.path, user["username"] ?? "");
+                        await LocalDb.instance.updateCandidatePhoto(widget.candidate.id, capturedImage!.path, user.username);
                         if (!mounted) return;
 
                         Navigator.pop(context, capturedImage!.path);

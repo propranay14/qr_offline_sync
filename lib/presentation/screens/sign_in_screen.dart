@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:qr_offline_sync/domain/usecase/validation_form.dart';
+import 'package:qr_offline_sync/presentation/screens/home_screen.dart';
 import 'package:qr_offline_sync/presentation/screens/live_photo_screen.dart';
 
 import '../../core/service/permission_service.dart';
@@ -13,8 +14,7 @@ import '../../data/local_db/local_db.dart';
 import '../../data/repository/auth_repository_impl.dart';
 import '../../data/repository/candidate_repository_impl.dart';
 import '../../domain/usecase/candidates_usecase.dart';
-import '../../domain/usecase/login_usecase.dart';
-import 'home_screen.dart';
+import '../../domain/usecase/auth_usecase.dart';
 
 class SignInScreen extends StatefulWidget {
   const SignInScreen({super.key});
@@ -49,7 +49,7 @@ class _SignInScreenState extends State<SignInScreen> {
 
     try {
       /// LOGIN
-      final loginUseCase = LoginUseCase(AuthRepositoryImpl(AuthRemoteDataSource()));
+      final loginUseCase = AuthUseCase(AuthRepositoryImpl(AuthRemoteDataSource()));
 
       /// API Call
       final loginResponse = await loginUseCase.call(username: usernameController.text.trim(), password: passwordController.text.trim());
@@ -64,13 +64,12 @@ class _SignInScreenState extends State<SignInScreen> {
       await fetchCandidates(loginResponse.fetchLimit, loginResponse.examInfo?.examId ?? '');
 
       /// Save Session for Operator
-      await SessionManager.saveLoginSession(loginResponse.toJson());
+      await SessionManager.saveLoginSession(loginResponse);
 
       if (!mounted) return;
       Fluttertoast.showToast(msg: "Login successful");
 
-      /// Navigate to Home Screen
-      Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const LivePhotoScreen()));
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => (loginResponse.examInfo == null) ? LivePhotoScreen() : HomeScreen()));
     } catch (e, stackTrace) {
       debugPrint("Login Error: $e");
       debugPrint("StackTrace: $stackTrace");

@@ -1,6 +1,7 @@
 import '../../domain/repository/auth_repository.dart';
 import '../datasource/auth_remote_datasource.dart';
 import '../model/login_response_model.dart';
+import '../model/operator_info_request_model.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
   final AuthRemoteDataSource remoteDataSource;
@@ -10,5 +11,10 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<LoginResponseModel> login({required String username, required String password}) async {
     return await remoteDataSource.login(username: username, password: password);
+  }
+
+  @override
+  Future<bool> updateOperatorInfo(OperatorInfoRequestModel model) async {
+    return await remoteDataSource.updateOperatorInfo(model);
   }
 }

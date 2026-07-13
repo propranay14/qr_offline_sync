@@ -41,13 +41,9 @@ class _FingerprintCaptureScreenState extends State<FingerprintCaptureScreen> {
       final session = await SessionManager.getLoginSession();
       if (session == null) return;
 
-      final username = session["user_info"]["username"] ?? "";
+      final username = session.userInfo.username;
 
-      await LocalDb.instance.updateCandidateFingerprint(
-        widget.candidate.id,
-        fingerprintTemplate!,
-        username,
-      );
+      await LocalDb.instance.updateCandidateFingerprint(widget.candidate.id, fingerprintTemplate!, username);
 
       setState(() {
         isWaiting = false;

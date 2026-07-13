@@ -34,23 +34,12 @@ class _SplashScreenState extends State<SplashScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
     return Scaffold(
-      backgroundColor: colorScheme.surface,
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.fingerprint, size: 100, color: colorScheme.primary),
-            const SizedBox(height: 20),
-            Text(
-              "Biometric Verification",
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: colorScheme.primary),
-            ),
-          ],
-        ),
-      ),
+      backgroundColor: Color(0xFF023020),
+      body: Center(child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 100),
+        child: Image.asset("assets/icon/app_icon.png"),
+      )),
     );
   }
 }

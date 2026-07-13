@@ -3,12 +3,17 @@ import 'dart:io';
 
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
+import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:intl/intl.dart';
-import 'package:qr_offline_sync/presentation/screens/home_screen.dart';
 
 import '../../core/service/permission_service.dart';
+import '../../core/storage/session_manager.dart';
 import '../../core/widgets/custom_cta_button.dart';
+import '../../data/datasource/auth_remote_datasource.dart';
+import '../../data/model/operator_info_request_model.dart';
+import '../../data/repository/auth_repository_impl.dart';
+import '../../domain/usecase/auth_usecase.dart';
+import 'home_screen.dart';
 
 class LivePhotoScreen extends StatefulWidget {
   const LivePhotoScreen({super.key});
@@ -19,44 +24,27 @@ class LivePhotoScreen extends StatefulWidget {
 
 class _LivePhotoScreenState extends State<LivePhotoScreen> with WidgetsBindingObserver {
   CameraController? _cameraController;
+  final Geocoding _geocoding = Geocoding();
 
-  bool isCameraReady = false;
-  bool isCapturing = false;
+  XFile? _capturedPhoto;
+  Position? _currentLocation;
 
-  XFile? capturedPhoto;
-
-  Position? currentLocation;
-
-  DateTime currentTime = DateTime.now();
-
-  Timer? timer;
+  bool _cameraReady = false;
+  bool _capturing = false;
+  bool _uploading = false;
 
   @override
   void initState() {
     super.initState();
-
     WidgetsBinding.instance.addObserver(this);
-
-    initialize();
+    _initialize();
   }
 
-  Future<void> initialize() async {
+  /// Requests permissions, initializes camera, fetches current location and starts the clock shown on the screen.
+  Future<void> _initialize() async {
     await PermissionService.requestCamera(context);
     await PermissionService.requestLocation(context);
 
-    await initializeCamera();
-    await fetchLocation();
-
-    timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (mounted) {
-        setState(() {
-          currentTime = DateTime.now();
-        });
-      }
-    });
-  }
-
-  Future<void> initializeCamera() async {
     final cameras = await availableCameras();
 
     final frontCamera = cameras.firstWhere((camera) => camera.lensDirection == CameraLensDirection.front);
@@ -65,71 +53,96 @@ class _LivePhotoScreenState extends State<LivePhotoScreen> with WidgetsBindingOb
 
     await _cameraController!.initialize();
 
+    try {
+      _currentLocation = await Geolocator.getCurrentPosition(locationSettings: LocationSettings(accuracy: LocationAccuracy.high));
+    } catch (_) {}
+
     if (!mounted) return;
 
-    setState(() {
-      isCameraReady = true;
-    });
+    setState(() => _cameraReady = true);
   }
 
-  Future<void> fetchLocation() async {
-    try {
-      currentLocation = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+  /// Captures photo from the front camera.
+  Future<void> _capturePhoto() async {
+    if (_cameraController == null || !_cameraController!.value.isInitialized || _capturing) {
+      return;
+    }
 
-      if (mounted) {
-        setState(() {});
-      }
-    } catch (_) {}
-  }
-
-  Future<void> capturePhoto() async {
-    if (_cameraController == null) return;
-
-    if (!_cameraController!.value.isInitialized) return;
-
-    setState(() {
-      isCapturing = true;
-    });
+    setState(() => _capturing = true);
 
     try {
-      capturedPhoto = await _cameraController!.takePicture();
+      _capturedPhoto = await _cameraController!.takePicture();
 
       if (mounted) {
         setState(() {});
       }
     } finally {
       if (mounted) {
-        setState(() {
-          isCapturing = false;
-        });
+        setState(() => _capturing = false);
       }
     }
   }
 
-  void retakePhoto() {
-    setState(() {
-      capturedPhoto = null;
-    });
+  /// Converts latitude & longitude into a readable address.
+  Future<String> _getAddress() async {
+    if (_currentLocation == null) return "";
+
+    try {
+      final placemarks = await _geocoding.placemarkFromCoordinates(_currentLocation!.latitude, _currentLocation!.longitude);
+
+      if (placemarks.isEmpty) return "";
+
+      final place = placemarks.first;
+
+      return [
+        place.name,
+        place.street,
+        place.subLocality,
+        place.locality,
+        place.subAdministrativeArea,
+        place.administrativeArea,
+        place.postalCode,
+        place.country,
+      ].where((e) => e != null && e.trim().isNotEmpty).join(", ");
+    } catch (_) {
+      return "";
+    }
   }
 
-  void continueNext() {
-    if (capturedPhoto == null || currentLocation == null) return;
+  /// Updates operator information and navigates to Home.
+  Future<void> _continue() async {
+    if (_capturedPhoto == null || _currentLocation == null) return;
 
-    print(
-      "photo: ${capturedPhoto!.path}, latitude: ${currentLocation!.latitude},longitude: ${currentLocation!.longitude},capture_time: ${currentTime.toIso8601String()}",
-    );
-    Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => HomeScreen()));
-  }
+    setState(() => _uploading = true);
 
-  @override
-  void dispose() {
-    timer?.cancel();
+    try {
+      final session = await SessionManager.getLoginSession();
+      if (session == null) return;
 
-    WidgetsBinding.instance.removeObserver(this);
+      final request = OperatorInfoRequestModel(
+        examId: session.examInfo?.examId ?? "No exam allocated",
+        operatorId: session.userInfo.username,
+        geo: "${_currentLocation!.latitude},${_currentLocation!.longitude}",
+        address: await _getAddress(),
+        photoPath: _capturedPhoto?.path ?? "",
+      );
 
-    _cameraController?.dispose();
+      final authUseCase = AuthUseCase(AuthRepositoryImpl(AuthRemoteDataSource()));
 
-    super.dispose();
+      final success = await authUseCase.updateOperatorInfo(request);
+
+      if (!mounted) return;
+
+      if (success) {
+        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const HomeScreen()));
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Failed to upload operator information")));
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _uploading = false);
+      }
+    }
   }
 
   @override
@@ -137,23 +150,17 @@ class _LivePhotoScreenState extends State<LivePhotoScreen> with WidgetsBindingOb
     if (_cameraController == null) return;
 
     if (state == AppLifecycleState.inactive) {
-      _cameraController?.dispose();
+      _cameraController!.dispose();
     } else if (state == AppLifecycleState.resumed) {
-      initializeCamera();
+      _initialize();
     }
   }
 
-  String get formattedDate => DateFormat("dd MMM yyyy").format(currentTime);
-
-  String get formattedTime => DateFormat("hh:mm:ss a").format(currentTime);
-
-  String get formattedLocation {
-    if (currentLocation == null) {
-      return "Fetching location...";
-    }
-
-    return "${currentLocation!.latitude.toStringAsFixed(6)}, "
-        "${currentLocation!.longitude.toStringAsFixed(6)}";
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _cameraController?.dispose();
+    super.dispose();
   }
 
   @override
@@ -161,95 +168,57 @@ class _LivePhotoScreenState extends State<LivePhotoScreen> with WidgetsBindingOb
     return Scaffold(
       appBar: AppBar(
         title: const Text("Operator Verification", style: TextStyle(color: Colors.white)),
-        backgroundColor: Theme.of(context).colorScheme.primary,
         centerTitle: true,
+        backgroundColor: Theme.of(context).colorScheme.primary,
         iconTheme: const IconThemeData(color: Colors.white),
       ),
-      body: SafeArea(
-        child: isCameraReady
-            ? SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Card(
-                      elevation: 3,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                      child: Padding(
-                        padding: const EdgeInsets.all(12),
-                        child: Column(
-                          children: [
-                            Row(
-                              children: [
-                                const Icon(Icons.calendar_today),
-                                const SizedBox(width: 10),
-                                Expanded(child: Text(formattedDate, style: const TextStyle(fontSize: 15))),
-                              ],
-                            ),
-                            const SizedBox(height: 12),
-                            Row(
-                              children: [
-                                const Icon(Icons.access_time),
-                                const SizedBox(width: 10),
-                                Expanded(child: Text(formattedTime, style: const TextStyle(fontSize: 15))),
-                              ],
-                            ),
-                            const SizedBox(height: 12),
-                            Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Icon(Icons.location_on),
-                                const SizedBox(width: 10),
-                                Expanded(child: Text(formattedLocation, style: const TextStyle(fontSize: 15))),
-                              ],
-                            ),
-                          ],
+      body: Stack(
+        children: [
+          SafeArea(
+            child: !_cameraReady
+                ? const Center(child: CircularProgressIndicator())
+                : Column(
+                    children: [
+                      Expanded(
+                        child: SingleChildScrollView(
+                          padding: const EdgeInsets.all(16),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(18),
+                            child: _capturedPhoto == null
+                                ? CameraPreview(_cameraController!)
+                                : Image.file(File(_capturedPhoto!.path), fit: BoxFit.cover),
+                          ),
                         ),
                       ),
-                    ),
-
-                    const SizedBox(height: 20),
-                    AspectRatio(
-                      aspectRatio: 2 / 3,
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(18),
-                        child: capturedPhoto == null ? CameraPreview(_cameraController!) : Image.file(File(capturedPhoto!.path), fit: BoxFit.cover),
-                      ),
-                    ),
-
-                    const SizedBox(height: 25),
-
-                    if (capturedPhoto == null)
-                      CustomCtaButton(
-                        onPressed: isCapturing
-                            ? null
-                            : () async {
-                                await capturePhoto();
-                              },
-                        text: isCapturing ? "Capturing..." : "Capture Photo",
-                      ),
-
-                    if (capturedPhoto != null)
-                      Row(
-                        children: [
-                          Expanded(
-                            child: OutlinedButton.icon(
-                              onPressed: retakePhoto,
-                              icon: const Icon(Icons.refresh),
-                              label: const Text("Retake"),
-                              style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(50)),
-                            ),
+                      if (_capturedPhoto == null)
+                        Padding(
+                          padding: const EdgeInsets.only(left: 24, right: 20, bottom: 24),
+                          child: CustomCtaButton(text: _capturing ? "Capturing..." : "Capture Photo", onPressed: _capturing ? null : _capturePhoto),
+                        )
+                      else
+                        Padding(
+                          padding: const EdgeInsets.only(left: 24, right: 20, bottom: 24),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: OutlinedButton.icon(
+                                  onPressed: () => setState(() => _capturedPhoto = null),
+                                  icon: const Icon(Icons.refresh),
+                                  label: const Text("Retake"),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: CustomCtaButton(text: "Continue", onPressed: _continue),
+                              ),
+                            ],
                           ),
-                          const SizedBox(width: 15),
-                          Expanded(
-                            child: CustomCtaButton(onPressed: continueNext, text: "Continue"),
-                          ),
-                        ],
-                      ),
-                  ],
-                ),
-              )
-            : const Center(child: CircularProgressIndicator()),
+                        ),
+                    ],
+                  ),
+          ),
+          _uploading ? Center(child: const CircularProgressIndicator()) : const SizedBox(),
+        ],
       ),
     );
   }

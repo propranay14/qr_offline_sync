@@ -7,6 +7,9 @@ class ApiConstants {
   /// Auth
   static const String login = "api/login";
 
+  /// Send Operator data after login
+  static const String updateOperatorInfo = "api/updateOperatorInfo";
+
   /// Fetch Candidates
   static const String fetchCandidates = "api/syncCandidates";
 
