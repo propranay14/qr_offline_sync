@@ -22,6 +22,11 @@ class _HomeScreenState extends State<HomeScreen> {
   List<CandidateModel> candidates = [];
   final TextEditingController searchController = TextEditingController();
 
+  bool _isSyncing = false;
+  double _syncProgress = 0;
+  int _uploaded = 0;
+  int _total = 0;
+
   String operatorName = "";
   String username = "";
   String role = "";
@@ -78,6 +83,47 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> scanQr() async {
     Navigator.push(context, MaterialPageRoute(builder: (_) => const QRScannerScreen()));
+  }
+
+  Future<void> _showSyncDialog() async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: const Text("Uploading Candidates"),
+              content: SizedBox(
+                width: 300,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    LinearProgressIndicator(value: _syncProgress),
+
+                    const SizedBox(height: 20),
+
+                    Text("${(_syncProgress * 100).toStringAsFixed(0)} %", style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+
+                    const SizedBox(height: 10),
+
+                    Text("$_uploaded / $_total Candidates Uploaded"),
+
+                    const SizedBox(height: 8),
+
+                    Text("Remaining : ${_total - _uploaded}"),
+
+                    const SizedBox(height: 20),
+
+                    const Text("Please don't close the application.", textAlign: TextAlign.center),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
   }
 
   Widget infoTile(IconData icon, String? value) {
@@ -194,24 +240,45 @@ class _HomeScreenState extends State<HomeScreen> {
           IconButton(
             onPressed: () async {
               final fetchUseCase = CandidatesUseCase(CandidateRepositoryImpl(CandidateRemoteDatasource(), LocalDb.instance));
+
               final localDb = LocalDb.instance;
+
               final pending = await localDb.getPendingCandidates();
+
               if (pending.isEmpty) {
                 Fluttertoast.showToast(msg: "No pending candidates to sync");
                 return;
               }
+
+              _total = pending.length;
+              _uploaded = 0;
+              _syncProgress = 0;
+
+              await _showSyncDialog();
+
               for (final candidate in pending) {
                 try {
                   final uploaded = await fetchUseCase.uploadCandidateBiometric(candidate, examId ?? "");
 
                   if (uploaded) {
-                    Fluttertoast.showToast(msg: "Candidates synced successfully");
                     await localDb.markCandidateSynced(candidate.id);
+
+                    _uploaded++;
+
+                    _syncProgress = _uploaded / _total;
+
+                    if (mounted) {
+                      setState(() {});
+                    }
                   }
-                } catch (e, stacktrace) {
-                  debugPrintStack(stackTrace: stacktrace);
-                }
+                } catch (_) {}
               }
+
+              if (mounted) {
+                Navigator.pop(context);
+              }
+
+              Fluttertoast.showToast(msg: "All candidates synced successfully");
             },
             icon: Icon(Icons.cloud_upload_outlined),
           ),

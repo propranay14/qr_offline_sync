@@ -69,7 +69,7 @@ class _SignInScreenState extends State<SignInScreen> {
       if (!mounted) return;
       Fluttertoast.showToast(msg: "Login successful");
 
-      Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => (loginResponse.examInfo == null) ? LivePhotoScreen() : HomeScreen()));
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => (loginResponse.examInfo != null) ? LivePhotoScreen() : HomeScreen()));
     } catch (e, stackTrace) {
       debugPrint("Login Error: $e");
       debugPrint("StackTrace: $stackTrace");
